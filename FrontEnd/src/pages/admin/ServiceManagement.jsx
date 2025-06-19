@@ -2,15 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
 import DokterManagement from '../../components/Admin/DokterManagement';
-import DurasiManagement from '../../components/Admin/DurasiManagement';
-import JenisKonsultasiManagement from '../../components/Admin/JenisKonsultasiManagement';
-import LayananBengkelManagement from '../../components/Admin/LayananBengkelManagement';
+
 import ProdukBengkelManagement from '../../components/Admin/ProdukBengkelManagement';
-import MerekKendaraanManagement from '../../components/Admin/MerekKendaraanManagement';
+
+import BengkelManagement from '../../components/Admin/BengkelManagement';
 import LayananOpoWaeManagement from '../../components/Admin/LayananOpoWaeManagement';
-import PekerjaManagement from '../../components/Admin/PekerjaManagement';
-import TarifManagement from '../../components/Admin/TarifManagement';
-import DatabaseTestPanel from '../../components/Admin/DatabaseTestPanel';
 
 const ServiceManagement = () => {
   const navigate = useNavigate();
@@ -23,7 +19,7 @@ const ServiceManagement = () => {
       id: 'psikologi',
       name: 'Psikologi',
       icon: '🧠',
-      description: 'Kelola dokter, durasi konsultasi, dan jenis layanan psikologi',
+      description: 'Kelola dokter/psikolog',
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600'
     },
@@ -42,14 +38,6 @@ const ServiceManagement = () => {
       description: 'Kelola layanan harian seperti driver, cleaner, babysitter',
       color: 'bg-purple-500',
       hoverColor: 'hover:bg-purple-600'
-    },
-    {
-      id: 'database-test',
-      name: 'Database Test',
-      icon: '🗄️',
-      description: 'Test koneksi dan penyimpanan data ke MySQL database',
-      color: 'bg-red-500',
-      hoverColor: 'hover:bg-red-600'
     }
   ];
 
@@ -58,11 +46,9 @@ const ServiceManagement = () => {
       case 'psikologi':
         return <PsikologiManagement />;
       case 'bengkel':
-        return <BengkelManagement />;
+        return <BengkelManagementSection />;
       case 'opo-wae':
         return <OpoWaeManagement />;
-      case 'database-test':
-        return <DatabaseTestPanel />;
       default:
         return <PsikologiManagement />;
     }
@@ -120,14 +106,6 @@ const ServiceManagement = () => {
 
 // Komponen untuk mengelola Psikologi
 const PsikologiManagement = () => {
-  const [activeSection, setActiveSection] = useState('dokter');
-
-  const sections = [
-    { id: 'dokter', name: 'Dokter/Psikolog', icon: '👨‍⚕️' },
-    { id: 'durasi', name: 'Durasi Konsultasi', icon: '⏰' },
-    { id: 'jenis', name: 'Jenis Konsultasi', icon: '💬' }
-  ];
-
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4 mb-6">
@@ -136,46 +114,25 @@ const PsikologiManagement = () => {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Kelola Layanan Psikologi</h2>
-          <p className="text-gray-600">Tambah dan kelola dokter, durasi, serta jenis konsultasi</p>
+          <p className="text-gray-600">Tambah dan kelola dokter/psikolog</p>
         </div>
       </div>
 
-      {/* Section Navigation */}
-      <div className="flex space-x-4 mb-6">
-        {sections.map((section) => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-              activeSection === section.id
-                ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <span>{section.icon}</span>
-            <span className="font-medium">{section.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Section Content */}
+      {/* Section Content - Langsung tampilkan DokterManagement */}
       <div className="bg-gray-50 rounded-lg p-6">
-        {activeSection === 'dokter' && <DokterManagement />}
-        {activeSection === 'durasi' && <DurasiManagement />}
-        {activeSection === 'jenis' && <JenisKonsultasiManagement />}
+        <DokterManagement />
       </div>
     </div>
   );
 };
 
 // Komponen untuk mengelola Bengkel
-const BengkelManagement = () => {
-  const [activeSection, setActiveSection] = useState('layanan');
+const BengkelManagementSection = () => {
+  const [activeSection, setActiveSection] = useState('bengkel');
 
   const sections = [
-    { id: 'layanan', name: 'Jenis Layanan', icon: '🔧' },
-    { id: 'produk', name: 'Produk/Spare Part', icon: '⚙️' },
-    { id: 'merek', name: 'Merek Kendaraan', icon: '🏷️' }
+    { id: 'bengkel', name: 'Data Bengkel', icon: '🏪' },
+    { id: 'produk', name: 'Produk/Spare Part', icon: '⚙️' }
   ];
 
   return (
@@ -210,9 +167,8 @@ const BengkelManagement = () => {
 
       {/* Section Content */}
       <div className="bg-gray-50 rounded-lg p-6">
-        {activeSection === 'layanan' && <LayananBengkelManagement />}
+        {activeSection === 'bengkel' && <BengkelManagement />}
         {activeSection === 'produk' && <ProdukBengkelManagement />}
-        {activeSection === 'merek' && <MerekKendaraanManagement />}
       </div>
     </div>
   );
@@ -220,14 +176,6 @@ const BengkelManagement = () => {
 
 // Komponen untuk mengelola Opo Wae
 const OpoWaeManagement = () => {
-  const [activeSection, setActiveSection] = useState('layanan');
-
-  const sections = [
-    { id: 'layanan', name: 'Jenis Layanan', icon: '🏠' },
-    { id: 'pekerja', name: 'Pekerja/Provider', icon: '👥' },
-    { id: 'tarif', name: 'Tarif & Harga', icon: '💰' }
-  ];
-
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4 mb-6">
@@ -236,33 +184,13 @@ const OpoWaeManagement = () => {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Kelola Layanan Opo Wae</h2>
-          <p className="text-gray-600">Tambah dan kelola layanan harian, pekerja, dan tarif</p>
+          <p className="text-gray-600">Tambah dan kelola jenis layanan harian</p>
         </div>
       </div>
 
-      {/* Section Navigation */}
-      <div className="flex space-x-4 mb-6">
-        {sections.map((section) => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-              activeSection === section.id
-                ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <span>{section.icon}</span>
-            <span className="font-medium">{section.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Section Content */}
+      {/* Section Content - Langsung tampilkan LayananOpoWaeManagement */}
       <div className="bg-gray-50 rounded-lg p-6">
-        {activeSection === 'layanan' && <LayananOpoWaeManagement />}
-        {activeSection === 'pekerja' && <PekerjaManagement />}
-        {activeSection === 'tarif' && <TarifManagement />}
+        <LayananOpoWaeManagement />
       </div>
     </div>
   );

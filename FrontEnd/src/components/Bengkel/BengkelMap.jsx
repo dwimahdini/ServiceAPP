@@ -1,43 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { bengkelService } from '../../services/bengkelService';
 
 const BengkelMap = ({ userLocation, onBengkelSelect }) => {
   const [bengkelList, setBengkelList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(userLocation || '');
-
-  // Mock data bengkel untuk demo
-  const mockBengkelData = [
-    {
-      id: 1,
-      nama: 'Bengkel Jaya Motor',
-      alamat: 'Jl. Sudirman No. 123, Jakarta',
-      jarak: '2.5 km',
-      rating: 4.5,
-      telepon: '021-1234567',
-      jamBuka: '08:00 - 17:00',
-      layanan: ['Service Rutin', 'Ganti Oli', 'Tune Up']
-    },
-    {
-      id: 2,
-      nama: 'Auto Service Center',
-      alamat: 'Jl. Gatot Subroto No. 456, Jakarta',
-      jarak: '3.2 km',
-      rating: 4.2,
-      telepon: '021-7654321',
-      jamBuka: '07:00 - 18:00',
-      layanan: ['AC Mobil', 'Rem', 'Transmisi']
-    },
-    {
-      id: 3,
-      nama: 'Bengkel Mandiri',
-      alamat: 'Jl. Thamrin No. 789, Jakarta',
-      jarak: '4.1 km',
-      rating: 4.7,
-      telepon: '021-9876543',
-      jamBuka: '08:30 - 16:30',
-      layanan: ['Body Repair', 'Cat Mobil', 'Denting']
-    }
-  ];
 
   useEffect(() => {
     if (selectedLocation) {
@@ -48,13 +15,36 @@ const BengkelMap = ({ userLocation, onBengkelSelect }) => {
   const searchNearbyBengkel = async () => {
     setLoading(true);
     try {
-      // Simulasi API call
-      setTimeout(() => {
-        setBengkelList(mockBengkelData);
-        setLoading(false);
-      }, 1000);
+      // Ambil data bengkel dari API berdasarkan lokasi
+      const response = await bengkelService.getAllBengkel();
+      const bengkelData = response.data || [];
+
+      // Format data untuk kompatibilitas dengan UI
+      const formattedBengkelData = bengkelData.map(bengkel => ({
+        id: bengkel.id,
+        nama: bengkel.nama_bengkel,
+        alamat: bengkel.alamat,
+        jarak: bengkel.koordinat_lat && bengkel.koordinat_lng ? 'Lokasi tersedia' : 'Hubungi bengkel',
+        rating: bengkel.rating || 4.0,
+        telepon: bengkel.telepon,
+        jamBuka: `${bengkel.jam_buka} - ${bengkel.jam_tutup}`,
+        layanan: bengkel.layanan_tersedia ? bengkel.layanan_tersedia.split(',').map(l => l.trim()) : []
+      }));
+
+      // Filter berdasarkan lokasi jika ada
+      let filteredBengkel = formattedBengkelData;
+      if (selectedLocation.trim()) {
+        filteredBengkel = formattedBengkelData.filter(bengkel =>
+          bengkel.alamat.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+          bengkel.nama.toLowerCase().includes(selectedLocation.toLowerCase())
+        );
+      }
+
+      setBengkelList(filteredBengkel);
     } catch (error) {
       console.error('Error fetching bengkel:', error);
+      setBengkelList([]);
+    } finally {
       setLoading(false);
     }
   };

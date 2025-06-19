@@ -7,12 +7,8 @@ const LayananOpoWaeManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingLayanan, setEditingLayanan] = useState(null);
   const [formData, setFormData] = useState({
-    nama_pilih_layanan: '',
-    deskripsi: '',
-    harga_per_jam: '',
-    harga_per_hari: '',
-    kategori: 'cleaning',
-    minimal_durasi: '2'
+    nama_pilihan: '',
+    harga: ''
   });
 
   useEffect(() => {
@@ -24,54 +20,17 @@ const LayananOpoWaeManagement = () => {
       setLoading(true);
       // Fetch layanan opo wae untuk layanan opo wae (layananId = 3)
       const response = await authAPI.get('/getpilihlayanan');
+      console.log('Response data:', response.data);
+
+      // Ambil data dari response.data.data (sesuai struktur response endpoint)
+      const allServices = response.data?.data || [];
       // Filter hanya untuk layanan opo wae (layananId = 3)
-      const opoWaeServices = response.data?.filter(item => item.layananId === 3) || [];
+      const opoWaeServices = allServices.filter(item => item.layananId === 3);
       setLayananOpoWae(opoWaeServices);
     } catch (error) {
       console.error('Error fetching layanan opo wae:', error);
-      // Fallback dengan data mock
-      setLayananOpoWae([
-        {
-          id: 1,
-          nama_pilih_layanan: 'Driver Pribadi',
-          deskripsi: 'Jasa driver untuk keperluan pribadi atau bisnis',
-          harga_per_jam: 25000,
-          harga_per_hari: 150000,
-          kategori: 'transport',
-          minimal_durasi: 2,
-          layananId: 3
-        },
-        {
-          id: 2,
-          nama_pilih_layanan: 'Cleaning Service',
-          deskripsi: 'Jasa pembersihan rumah, kantor, atau gedung',
-          harga_per_jam: 20000,
-          harga_per_hari: 120000,
-          kategori: 'cleaning',
-          minimal_durasi: 3,
-          layananId: 3
-        },
-        {
-          id: 3,
-          nama_pilih_layanan: 'Babysitter',
-          deskripsi: 'Jasa pengasuhan anak profesional',
-          harga_per_jam: 30000,
-          harga_per_hari: 200000,
-          kategori: 'childcare',
-          minimal_durasi: 4,
-          layananId: 3
-        },
-        {
-          id: 4,
-          nama_pilih_layanan: 'Tukang Listrik',
-          deskripsi: 'Jasa perbaikan dan instalasi listrik',
-          harga_per_jam: 50000,
-          harga_per_hari: 300000,
-          kategori: 'maintenance',
-          minimal_durasi: 1,
-          layananId: 3
-        }
-      ]);
+      // NO FALLBACK DATA - hanya tampilkan data dari database
+      setLayananOpoWae([]);
     } finally {
       setLoading(false);
     }
@@ -81,36 +40,33 @@ const LayananOpoWaeManagement = () => {
     e.preventDefault();
     try {
       const submitData = {
-        ...formData,
-        layananId: 3, // ID untuk layanan Opo Wae
-        harga_per_jam: parseInt(formData.harga_per_jam),
-        harga_per_hari: parseInt(formData.harga_per_hari),
-        minimal_durasi: parseInt(formData.minimal_durasi)
+        nama_pilihan: formData.nama_pilihan,
+        harga: parseFloat(formData.harga),
+        layananId: 3 // ID untuk layanan Opo Wae
       };
+
+      console.log('Submitting data:', submitData);
 
       if (editingLayanan) {
         await authAPI.put(`/pilihlayanan/${editingLayanan.id}`, submitData);
       } else {
         await authAPI.post('/pilihlayanan', submitData);
       }
-      
+
       await fetchLayananOpoWae();
       resetForm();
+      alert('Data berhasil disimpan!');
     } catch (error) {
       console.error('Error saving layanan opo wae:', error);
-      alert('Gagal menyimpan data layanan opo wae');
+      alert('Gagal menyimpan data layanan opo wae: ' + (error.response?.data?.message || error.message));
     }
   };
 
   const handleEdit = (layanan) => {
     setEditingLayanan(layanan);
     setFormData({
-      nama_pilih_layanan: layanan.nama_pilih_layanan || '',
-      deskripsi: layanan.deskripsi || '',
-      harga_per_jam: layanan.harga_per_jam?.toString() || '',
-      harga_per_hari: layanan.harga_per_hari?.toString() || '',
-      kategori: layanan.kategori || 'cleaning',
-      minimal_durasi: layanan.minimal_durasi?.toString() || '2'
+      nama_pilihan: layanan.nama_pilihan || '',
+      harga: layanan.harga?.toString() || ''
     });
     setShowForm(true);
   };
@@ -129,12 +85,8 @@ const LayananOpoWaeManagement = () => {
 
   const resetForm = () => {
     setFormData({
-      nama_pilih_layanan: '',
-      deskripsi: '',
-      harga_per_jam: '',
-      harga_per_hari: '',
-      kategori: 'cleaning',
-      minimal_durasi: '2'
+      nama_pilihan: '',
+      harga: ''
     });
     setEditingLayanan(null);
     setShowForm(false);
@@ -156,6 +108,27 @@ const LayananOpoWaeManagement = () => {
     }).format(amount);
   };
 
+  // Infer category from service name (same logic as in opoWaeService)
+  const inferCategoryFromName = (nama) => {
+    const name = nama.toLowerCase();
+    if (name.includes('driver') || name.includes('ojek') || name.includes('transport')) {
+      return 'transport';
+    } else if (name.includes('cleaning') || name.includes('bersih') || name.includes('laundry')) {
+      return 'cleaning';
+    } else if (name.includes('baby') || name.includes('anak') || name.includes('pengasuh')) {
+      return 'childcare';
+    } else if (name.includes('tukang') || name.includes('perbaikan') || name.includes('maintenance')) {
+      return 'maintenance';
+    } else if (name.includes('pijat') || name.includes('spa') || name.includes('massage')) {
+      return 'massage';
+    } else if (name.includes('masak') || name.includes('catering') || name.includes('cook')) {
+      return 'cooking';
+    } else if (name.includes('taman') || name.includes('kebun') || name.includes('garden')) {
+      return 'gardening';
+    }
+    return 'other';
+  };
+
   const getKategoriIcon = (kategori) => {
     switch (kategori) {
       case 'cleaning': return '🧹';
@@ -164,6 +137,8 @@ const LayananOpoWaeManagement = () => {
       case 'maintenance': return '🔧';
       case 'cooking': return '👨‍🍳';
       case 'gardening': return '🌱';
+      case 'massage': return '💆';
+      case 'other': return '🏠';
       default: return '🏠';
     }
   };
@@ -176,6 +151,8 @@ const LayananOpoWaeManagement = () => {
       case 'maintenance': return 'bg-orange-100 text-orange-800';
       case 'cooking': return 'bg-yellow-100 text-yellow-800';
       case 'gardening': return 'bg-emerald-100 text-emerald-800';
+      case 'massage': return 'bg-purple-100 text-purple-800';
+      case 'other': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -227,8 +204,8 @@ const LayananOpoWaeManagement = () => {
                 </label>
                 <input
                   type="text"
-                  name="nama_pilih_layanan"
-                  value={formData.nama_pilih_layanan}
+                  name="nama_pilihan"
+                  value={formData.nama_pilihan}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="Driver Pribadi"
@@ -240,84 +217,23 @@ const LayananOpoWaeManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Kategori
                 </label>
-                <select
-                  name="kategori"
-                  value={formData.kategori}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  required
-                >
-                  <option value="cleaning">🧹 Cleaning</option>
-                  <option value="transport">🚗 Transport</option>
-                  <option value="childcare">👶 Childcare</option>
-                  <option value="maintenance">🔧 Maintenance</option>
-                  <option value="cooking">👨‍🍳 Cooking</option>
-                  <option value="gardening">🌱 Gardening</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Harga per Jam (Rp)
-                  </label>
-                  <input
-                    type="number"
-                    name="harga_per_jam"
-                    value={formData.harga_per_jam}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="25000"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Harga per Hari (Rp)
-                  </label>
-                  <input
-                    type="number"
-                    name="harga_per_hari"
-                    value={formData.harga_per_hari}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="150000"
-                    required
-                  />
+                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
+                  Kategori akan otomatis ditentukan berdasarkan nama layanan
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Minimal Durasi (jam)
+                  Harga (Rp)
                 </label>
-                <select
-                  name="minimal_durasi"
-                  value={formData.minimal_durasi}
+                <input
+                  type="number"
+                  name="harga"
+                  value={formData.harga}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="25000"
                   required
-                >
-                  <option value="1">1 jam</option>
-                  <option value="2">2 jam</option>
-                  <option value="3">3 jam</option>
-                  <option value="4">4 jam</option>
-                  <option value="8">8 jam (1 hari)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Deskripsi
-                </label>
-                <textarea
-                  name="deskripsi"
-                  value={formData.deskripsi}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Deskripsi layanan opo wae..."
                 />
               </div>
 
@@ -343,38 +259,25 @@ const LayananOpoWaeManagement = () => {
 
       {/* Daftar Layanan Opo Wae */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {layananOpoWae.map((layanan) => (
-          <div key={layanan.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <span className="text-2xl">{getKategoriIcon(layanan.kategori)}</span>
-                <div>
-                  <h4 className="font-medium text-gray-900">{layanan.nama_pilih_layanan}</h4>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getKategoriBadgeColor(layanan.kategori)}`}>
-                    {layanan.kategori?.toUpperCase()}
-                  </span>
+        {layananOpoWae.map((layanan) => {
+          const inferredCategory = inferCategoryFromName(layanan.nama_pilihan);
+          return (
+            <div key={layanan.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">{getKategoriIcon(inferredCategory)}</span>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{layanan.nama_pilihan}</h4>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getKategoriBadgeColor(inferredCategory)}`}>
+                      {inferredCategory?.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
             
-            <p className="text-sm text-gray-600 mb-4">{layanan.deskripsi}</p>
-            
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Per Jam:</span>
-                <span className="text-sm font-medium text-purple-600">
-                  {formatCurrency(layanan.harga_per_jam)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Per Hari:</span>
-                <span className="text-sm font-medium text-purple-600">
-                  {formatCurrency(layanan.harga_per_hari)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Min. Durasi:</span>
-                <span className="text-sm text-gray-900">{layanan.minimal_durasi} jam</span>
+            <div className="flex items-center justify-between mt-4 mb-4">
+              <div className="text-lg font-medium text-purple-600">
+                {formatCurrency(layanan.harga)}
               </div>
             </div>
             
@@ -393,7 +296,8 @@ const LayananOpoWaeManagement = () => {
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {layananOpoWae.length === 0 && (

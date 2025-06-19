@@ -5,14 +5,35 @@ const JadwalKonsultasi = ({ dokter, onBooking, onClose }) => {
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('30');
 
-  // Mock jadwal untuk demo
-  const jadwalMingguIni = [
-    { tanggal: '2024-01-15', hari: 'Senin', slots: ['09:00', '10:00', '11:00', '14:00', '15:00'] },
-    { tanggal: '2024-01-16', hari: 'Selasa', slots: ['09:00', '10:30', '13:00', '14:30'] },
-    { tanggal: '2024-01-17', hari: 'Rabu', slots: ['08:00', '09:30', '11:00', '15:00', '16:00'] },
-    { tanggal: '2024-01-18', hari: 'Kamis', slots: ['09:00', '10:00', '14:00', '15:30'] },
-    { tanggal: '2024-01-19', hari: 'Jumat', slots: ['08:30', '10:00', '11:30', '13:00'] },
-  ];
+  // Generate jadwal dinamis untuk 7 hari ke depan
+  const generateJadwalMingguIni = () => {
+    const jadwal = [];
+    const today = new Date();
+    const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+    for (let i = 0; i < 7; i++) {
+      const tanggal = new Date(today);
+      tanggal.setDate(today.getDate() + i);
+
+      const tahun = tanggal.getFullYear();
+      const bulan = String(tanggal.getMonth() + 1).padStart(2, '0');
+      const hari = String(tanggal.getDate()).padStart(2, '0');
+      const tanggalStr = `${tahun}-${bulan}-${hari}`;
+
+      // Generate slot waktu standar (bisa disesuaikan dengan data dokter dari database)
+      const slots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
+
+      jadwal.push({
+        tanggal: tanggalStr,
+        hari: namaHari[tanggal.getDay()],
+        slots: slots
+      });
+    }
+
+    return jadwal;
+  };
+
+  const jadwalMingguIni = generateJadwalMingguIni();
 
   const handleBooking = () => {
     if (!selectedDate || !selectedTime) {
@@ -25,7 +46,7 @@ const JadwalKonsultasi = ({ dokter, onBooking, onClose }) => {
       tanggal: selectedDate,
       waktu: selectedTime,
       durasi: selectedDuration,
-      tarif: selectedDuration === '30' ? dokter.tarif.tigaPuluhMenit : dokter.tarif.enamPuluhMenit
+      tarif: dokter.tarif_per_jam ? `Rp ${parseFloat(dokter.tarif_per_jam).toLocaleString('id-ID')}` : 'Hubungi dokter'
     };
 
     onBooking && onBooking(bookingData);
@@ -37,7 +58,7 @@ const JadwalKonsultasi = ({ dokter, onBooking, onClose }) => {
         <div className="mt-3">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900">
-              Jadwal Konsultasi - {dokter.nama}
+              Jadwal Konsultasi - {dokter.pilih_dokter_psikolog}
             </h3>
             <button
               onClick={onClose}
@@ -58,7 +79,7 @@ const JadwalKonsultasi = ({ dokter, onBooking, onClose }) => {
                 </svg>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900">{dokter.nama}</h4>
+                <h4 className="font-medium text-gray-900">{dokter.pilih_dokter_psikolog}</h4>
                 <p className="text-sm text-gray-600">{dokter.spesialisasi}</p>
               </div>
             </div>
@@ -77,7 +98,9 @@ const JadwalKonsultasi = ({ dokter, onBooking, onClose }) => {
                 }`}
               >
                 <div className="font-medium">30 Menit</div>
-                <div className="text-sm text-gray-600">{dokter.tarif.tigaPuluhMenit}</div>
+                <div className="text-sm text-gray-600">
+                  {dokter.tarif_per_jam ? `Rp ${(parseFloat(dokter.tarif_per_jam) * 0.5).toLocaleString('id-ID')}` : 'Hubungi dokter'}
+                </div>
               </button>
               <button
                 onClick={() => setSelectedDuration('60')}
@@ -88,7 +111,9 @@ const JadwalKonsultasi = ({ dokter, onBooking, onClose }) => {
                 }`}
               >
                 <div className="font-medium">60 Menit</div>
-                <div className="text-sm text-gray-600">{dokter.tarif.enamPuluhMenit}</div>
+                <div className="text-sm text-gray-600">
+                  {dokter.tarif_per_jam ? `Rp ${parseFloat(dokter.tarif_per_jam).toLocaleString('id-ID')}` : 'Hubungi dokter'}
+                </div>
               </button>
             </div>
           </div>
@@ -146,12 +171,18 @@ const JadwalKonsultasi = ({ dokter, onBooking, onClose }) => {
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
               <h4 className="font-medium text-blue-900 mb-2">Ringkasan Booking:</h4>
               <div className="text-sm text-blue-800 space-y-1">
-                <div>Dokter: {dokter.nama}</div>
+                <div>Dokter: {dokter.pilih_dokter_psikolog}</div>
                 <div>Tanggal: {selectedDate}</div>
                 <div>Waktu: {selectedTime}</div>
                 <div>Durasi: {selectedDuration} menit</div>
                 <div className="font-medium">
-                  Total: {selectedDuration === '30' ? dokter.tarif.tigaPuluhMenit : dokter.tarif.enamPuluhMenit}
+                  Total: {dokter.tarif_per_jam ?
+                    `Rp ${(selectedDuration === '30' ?
+                      parseFloat(dokter.tarif_per_jam) * 0.5 :
+                      parseFloat(dokter.tarif_per_jam)
+                    ).toLocaleString('id-ID')}` :
+                    'Hubungi dokter'
+                  }
                 </div>
               </div>
             </div>

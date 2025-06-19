@@ -1,91 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/Layout/MainLayout';
+import BengkelDetailModal from '../../components/Bengkel/BengkelDetailModal';
+import { bengkelService } from '../../services/bengkelService';
 
 const LayananMobilPage = () => {
   const [bengkelList, setBengkelList] = useState([]);
   const [filteredBengkel, setFilteredBengkel] = useState([]);
+  const [produkList, setProdukList] = useState([]);
   const [searchLocation, setSearchLocation] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedBengkel, setSelectedBengkel] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Mock data untuk bengkel mobil
-  const mockBengkelData = [
-    {
-      id: 1,
-      nama: 'Auto Service Center',
-      alamat: 'Jl. Raya Darmo No. 456',
-      jarak: '1.8 km',
-      rating: 4.6,
-      layanan: ['Service Berkala', 'Tune Up', 'AC Service'],
-      jam_buka: '08:00 - 17:00',
-      telepon: '031-7654321'
-    },
-    {
-      id: 2,
-      nama: 'Bengkel Mobil Sejahtera',
-      alamat: 'Jl. HR Muhammad No. 89',
-      jarak: '2.3 km',
-      rating: 4.4,
-      layanan: ['Service Rutin', 'Perbaikan Mesin', 'Ganti Ban'],
-      jam_buka: '09:00 - 18:00',
-      telepon: '031-8901234'
-    },
-    {
-      id: 3,
-      nama: 'Prima Auto Care',
-      alamat: 'Jl. Basuki Rahmat No. 234',
-      jarak: '3.5 km',
-      rating: 4.8,
-      layanan: ['Service Premium', 'Body Repair', 'Cat Mobil'],
-      jam_buka: '08:30 - 17:30',
-      telepon: '031-3456789'
-    }
-  ];
 
-  // Mock data untuk produk mobil
-  const mockProdukData = [
-    {
-      id: 1,
-      nama_produk: 'Ban Radial',
-      harga: 'Rp 1.200.000',
-      kategori: 'Ban',
-      merek: 'Bridgestone',
-      gambar: null
-    },
-    {
-      id: 2,
-      nama_produk: 'Aki Mobil',
-      harga: 'Rp 950.000',
-      kategori: 'Aki',
-      merek: 'GS Astra',
-      gambar: null
-    },
-    {
-      id: 3,
-      nama_produk: 'Oli Mesin Mobil',
-      harga: 'Rp 150.000',
-      kategori: 'Oli',
-      merek: 'Shell Helix',
-      gambar: null
-    },
-    {
-      id: 4,
-      nama_produk: 'Filter Udara',
-      harga: 'Rp 85.000',
-      kategori: 'Filter',
-      merek: 'Denso',
-      gambar: null
-    }
-  ];
 
   useEffect(() => {
-    // Simulasi loading data
-    setLoading(true);
-    setTimeout(() => {
-      setBengkelList(mockBengkelData);
-      setFilteredBengkel(mockBengkelData);
-      setLoading(false);
-    }, 1000);
+    fetchBengkelData();
   }, []);
+
+  const fetchBengkelData = async () => {
+    try {
+      setLoading(true);
+      // Ambil bengkel khusus mobil dan produk secara parallel
+      const [bengkelResponse, produkResponse] = await Promise.all([
+        bengkelService.getBengkelByJenis('mobil'),
+        bengkelService.getAllBengkelProduk()
+      ]);
+
+      const bengkelData = bengkelResponse.data || [];
+      const produkData = produkResponse.data || [];
+
+      // Format data bengkel untuk kompatibilitas dengan UI yang ada
+      const formattedBengkelData = bengkelData.map(bengkel => ({
+        id: bengkel.id,
+        nama: bengkel.nama_bengkel,
+        alamat: bengkel.alamat,
+        jarak: bengkel.koordinat_lat && bengkel.koordinat_lng ? 'Lokasi tersedia' : 'Hubungi bengkel',
+        rating: bengkel.rating || 4.0,
+        layanan: bengkel.layanan_tersedia ? bengkel.layanan_tersedia.split(',').map(l => l.trim()) : [],
+        jam_buka: `${bengkel.jam_buka} - ${bengkel.jam_tutup}`,
+        telepon: bengkel.telepon
+      }));
+
+      // Filter produk untuk bengkel mobil saja
+      const mobilProduk = produkData.filter(produk =>
+        produk.Bengkel && produk.Bengkel.jenis_kendaraan === 'mobil'
+      );
+
+      setBengkelList(formattedBengkelData);
+      setFilteredBengkel(formattedBengkelData);
+      setProdukList(mobilProduk);
+    } catch (error) {
+      console.error('Error fetching bengkel data:', error);
+      // Set empty arrays on error
+      setBengkelList([]);
+      setFilteredBengkel([]);
+      setProdukList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -104,6 +78,11 @@ const LayananMobilPage = () => {
       }
       setLoading(false);
     }, 500);
+  };
+
+  const handleViewDetail = (bengkel) => {
+    setSelectedBengkel(bengkel);
+    setShowDetailModal(true);
   };
 
   return (
@@ -167,6 +146,16 @@ const LayananMobilPage = () => {
               <div className="flex justify-center items-center h-32">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
+            ) : filteredBengkel.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada bengkel mobil</h3>
+                <p className="text-gray-500">Bengkel mobil akan segera tersedia di area Anda.</p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {filteredBengkel.map((bengkel) => (
@@ -209,7 +198,10 @@ const LayananMobilPage = () => {
                       </div>
                       
                       <div className="flex flex-col gap-2 ml-4">
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <button
+                          onClick={() => handleViewDetail(bengkel)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
                           Lihat Detail
                         </button>
                         <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
@@ -238,28 +230,36 @@ const LayananMobilPage = () => {
                 <button className="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg font-medium">
                   Semua
                 </button>
-                <button className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                  Ban
-                </button>
-                <button className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                  Aki
-                </button>
-                <button className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                  Oli
-                </button>
-                <button className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                  Filter
-                </button>
+                {/* Kategori dinamis berdasarkan jenis layanan produk yang tersedia */}
+                {[...new Set(produkList.map(produk => produk.jenis_layanan).filter(Boolean))].map((kategori) => (
+                  <button
+                    key={kategori}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  >
+                    {kategori}
+                  </button>
+                ))}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {mockProdukData.map((produk) => (
+              {produkList.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada produk</h3>
+                  <p className="text-gray-500">Produk untuk bengkel mobil akan segera tersedia.</p>
+                </div>
+              ) : (
+                produkList.map((produk) => (
                 <div key={produk.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="aspect-square bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                    {produk.gambar ? (
-                      <img 
-                        src={produk.gambar} 
+                    {produk.foto_produk ? (
+                      <img
+                        src={produk.foto_produk}
                         alt={produk.nama_produk}
                         className="w-full h-full object-cover rounded-lg"
                       />
@@ -272,13 +272,29 @@ const LayananMobilPage = () => {
                     )}
                   </div>
                   <h4 className="font-semibold text-gray-900 mb-1">{produk.nama_produk}</h4>
-                  <p className="text-blue-600 font-bold">{produk.harga}</p>
-                  <p className="text-sm text-gray-500">{produk.merek}</p>
+                  <p className="text-blue-600 font-bold">
+                    Rp {produk.harga ? produk.harga.toLocaleString('id-ID') : '0'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {produk.Bengkel ? produk.Bengkel.nama_bengkel : 'Bengkel tidak diketahui'}
+                  </p>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
+
+        {/* Detail Modal */}
+        {showDetailModal && selectedBengkel && (
+          <BengkelDetailModal
+            bengkel={selectedBengkel}
+            onClose={() => {
+              setShowDetailModal(false);
+              setSelectedBengkel(null);
+            }}
+          />
+        )}
       </div>
     </MainLayout>
   );

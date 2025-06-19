@@ -1,12 +1,44 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/Layout/MainLayout';
 import UserProfile from '../../components/User/UserProfile';
 import BookingHistory from '../../components/User/BookingHistory';
+import { bookingService } from '../../services/bookingService';
 
 const UserDashboardPage = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
+  const [bookingStats, setBookingStats] = useState({
+    total: 0,
+    completed: 0,
+    pending: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  useEffect(() => {
+    if (user.id) {
+      fetchBookingStats();
+    }
+  }, [user.id]);
+
+  const fetchBookingStats = async () => {
+    try {
+      setLoading(true);
+      const bookings = await bookingService.getUserBookings();
+
+      const stats = {
+        total: bookings.length,
+        completed: bookings.filter(b => b.status === 'completed').length,
+        pending: bookings.filter(b => b.status === 'pending').length
+      };
+
+      setBookingStats(stats);
+    } catch (error) {
+      console.error('Error fetching booking stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'profile', name: 'Profile', icon: '👤' },
@@ -54,7 +86,9 @@ const UserDashboardPage = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Booking</p>
-                <p className="text-2xl font-bold text-gray-900">-</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '...' : bookingStats.total}
+                </p>
               </div>
             </div>
           </div>
@@ -66,7 +100,9 @@ const UserDashboardPage = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Booking Selesai</p>
-                <p className="text-2xl font-bold text-gray-900">-</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '...' : bookingStats.completed}
+                </p>
               </div>
             </div>
           </div>
@@ -78,7 +114,9 @@ const UserDashboardPage = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Booking Pending</p>
-                <p className="text-2xl font-bold text-gray-900">-</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? '...' : bookingStats.pending}
+                </p>
               </div>
             </div>
           </div>

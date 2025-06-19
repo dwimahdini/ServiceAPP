@@ -30,12 +30,10 @@ const AdminLoginTest = () => {
 
       // Test multiple possible endpoints
       const endpoints = [
-        'http://localhost:5000/api/test',
-        'http://localhost:5000/test',
-        'http://localhost:5000/',
-        'http://localhost:3000/api/test',
-        'http://localhost:3000/test',
-        'http://localhost:3000/'
+        'http://localhost:3001/api/test',
+        'http://localhost:3001/test',
+        'http://localhost:3001/',
+        'http://localhost:3001'
       ];
 
       let connectionResult = null;
@@ -67,7 +65,7 @@ const AdminLoginTest = () => {
       if (!connectionResult) {
         connectionResult = {
           success: false,
-          message: 'No backend server found on ports 3000 or 5000. Please start your backend server.'
+          message: 'No backend server found on port 3001. Please start your backend server.'
         };
       }
 
@@ -211,7 +209,7 @@ const AdminLoginTest = () => {
             <div className="flex items-center gap-3">
               <StatusIndicator result={testResults.apiConnection} />
               <span className="text-sm text-gray-600">
-                {testResults.apiConnection?.message || 'Test API connection to http://localhost:5000'}
+                {testResults.apiConnection?.message || 'Test API connection to http://localhost:3001'}
               </span>
             </div>
           </div>
@@ -308,10 +306,10 @@ const AdminLoginTest = () => {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Backend Information</h3>
             <div className="text-xs text-gray-600 space-y-1">
-              <div><strong>API Base URL:</strong> http://localhost:5000</div>
+              <div><strong>API Base URL:</strong> http://localhost:3001</div>
               <div><strong>Expected Endpoints:</strong> /login, /register, /users</div>
               <div><strong>Database:</strong> MySQL with schema from database-schema.sql</div>
-              <div><strong>Admin Credentials:</strong> admin12@gmail.com / admin123</div>
+              <div><strong>Admin Credentials:</strong> admin@futurex.com / admin123</div>
               <div><strong>User Credentials:</strong> user@example.com / password</div>
             </div>
           </div>

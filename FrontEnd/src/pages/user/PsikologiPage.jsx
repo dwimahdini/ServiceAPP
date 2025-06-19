@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
 import { psikologiService } from '../../services/psikologiService';
-import ApiStatus from '../../components/Debug/ApiStatus';
+import { bookingService } from '../../services/bookingService';
 
 const PsikologiPage = () => {
   const navigate = useNavigate();
@@ -40,58 +40,10 @@ const PsikologiPage = () => {
       console.error('Error fetching data:', error);
       setError('Gagal memuat data. Silakan coba lagi.');
 
-      // Fallback ke mock data jika API gagal
-      const mockDokterData = [
-        {
-          id: 1,
-          pilih_dokter_psikolog: 'Dr. Fauzan Jamil',
-          spesialisasi: 'Psikologi Klinis',
-          pengalaman: '8 tahun',
-          rating: 4.8,
-          foto: 'https://images.pexels.com/photos/5215024/pexels-photo-5215024.jpeg?auto=compress&cs=tinysrgb&w=400'
-        },
-        {
-          id: 2,
-          pilih_dokter_psikolog: 'Dr. Rina Damayanti',
-          spesialisasi: 'Psikologi Anak',
-          pengalaman: '6 tahun',
-          rating: 4.7,
-          foto: 'https://images.pexels.com/photos/5452293/pexels-photo-5452293.jpeg?auto=compress&cs=tinysrgb&w=400'
-        },
-        {
-          id: 3,
-          pilih_dokter_psikolog: 'Dr. Sabrina Salsabila',
-          spesialisasi: 'Terapi Keluarga',
-          pengalaman: '10 tahun',
-          rating: 4.9,
-          foto: 'https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg?auto=compress&cs=tinysrgb&w=400'
-        },
-        {
-          id: 4,
-          pilih_dokter_psikolog: 'Dr. Ahmad Jatmiko',
-          spesialisasi: 'Psikologi Dewasa',
-          pengalaman: '12 tahun',
-          rating: 4.6,
-          foto: 'https://images.pexels.com/photos/5452274/pexels-photo-5452274.jpeg?auto=compress&cs=tinysrgb&w=400'
-        }
-      ];
-
-      const mockDurasiData = [
-        { id: 1, durasi: 30, label: '30 Menit' },
-        { id: 2, durasi: 60, label: '1 Jam' },
-        { id: 3, durasi: 90, label: '1.5 Jam' }
-      ];
-
-      const mockLayananData = [
-        { id: 1, nama_layanan: 'Konsultasi Individual' },
-        { id: 2, nama_layanan: 'Terapi Keluarga' },
-        { id: 3, nama_layanan: 'Konseling Anak' },
-        { id: 4, nama_layanan: 'Konseling Pasangan' }
-      ];
-
-      setDokterList(mockDokterData);
-      setDurasiList(mockDurasiData);
-      setLayananList(mockLayananData);
+      // Set empty arrays on error - NO MOCK DATA!
+      setDokterList([]);
+      setDurasiList([]);
+      setLayananList([]);
     } finally {
       setLoading(false);
     }
@@ -116,17 +68,19 @@ const PsikologiPage = () => {
       setSubmitting(true);
       setError(null);
 
-      // Prepare booking data sesuai dengan database schema
-      const bookingData = {
-        jam_booking: bookingForm.pilih_jam,
-        layananId: parseInt(bookingForm.layanan_konsultasi),
-        dokterpsikologId: parseInt(bookingForm.pilih_dokter_psikolog),
-        durasiId: parseInt(bookingForm.durasi_konsultasi)
-      };
+      // Check if user is logged in
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!user.id) {
+        alert('Silakan login terlebih dahulu untuk melakukan booking.');
+        return;
+      }
+
+      // Format booking data menggunakan booking service
+      const bookingData = bookingService.formatPsikologiBooking(bookingForm);
 
       console.log('Sending booking data:', bookingData);
 
-      const result = await psikologiService.createBooking(bookingData);
+      const result = await bookingService.createValidatedBooking(bookingData);
 
       console.log('Booking result:', result);
       alert('Booking berhasil! Kami akan menghubungi Anda segera.');
@@ -142,8 +96,8 @@ const PsikologiPage = () => {
 
     } catch (error) {
       console.error('Error submitting booking:', error);
-      setError('Gagal membuat booking. Silakan coba lagi.');
-      alert('Gagal membuat booking. Silakan coba lagi.');
+      setError(error.message || 'Gagal membuat booking. Silakan coba lagi.');
+      alert(error.message || 'Gagal membuat booking. Silakan coba lagi.');
     } finally {
       setSubmitting(false);
     }
@@ -301,16 +255,34 @@ const PsikologiPage = () => {
               <div className="flex justify-center items-center h-32">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
+            ) : dokterList.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada dokter psikologi</h3>
+                <p className="text-gray-500">Dokter psikologi akan segera tersedia untuk konsultasi.</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {dokterList.map((dokter) => (
                   <div key={dokter.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
                     <div className="aspect-square bg-gray-200 flex items-center justify-center">
-                      <img
-                        src={dokter.foto}
-                        alt={dokter.nama_dokter}
-                        className="w-full h-full object-cover"
-                      />
+                      {dokter.foto ? (
+                        <img
+                          src={dokter.foto}
+                          alt={dokter.pilih_dokter_psikolog}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
 
                     <div className="p-6">
@@ -322,14 +294,20 @@ const PsikologiPage = () => {
                         Pengalaman: {dokter.pengalaman || 'Berpengalaman'}
                       </p>
 
+                      {dokter.tarif_per_jam && (
+                        <div className="mb-3">
+                          <p className="text-green-600 font-semibold">
+                            Rp {parseFloat(dokter.tarif_per_jam).toLocaleString('id-ID')}/jam
+                          </p>
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-2 mb-4">
                         <div className="flex items-center">
                           {[...Array(5)].map((_, i) => (
                             <svg
                               key={i}
-                              className={`w-4 h-4 ${
-                                i < Math.floor(dokter.rating || 4.5) ? 'text-yellow-400' : 'text-gray-300'
-                              }`}
+                              className="w-4 h-4 text-yellow-400"
                               fill="currentColor"
                               viewBox="0 0 20 20"
                             >
@@ -337,7 +315,7 @@ const PsikologiPage = () => {
                             </svg>
                           ))}
                         </div>
-                        <span className="text-sm text-gray-600">({dokter.rating || 4.5})</span>
+                        <span className="text-sm text-gray-600">Berpengalaman</span>
                       </div>
 
                       <button
@@ -356,8 +334,6 @@ const PsikologiPage = () => {
 
       </div>
 
-      {/* Debug Component - Remove in production */}
-      {process.env.NODE_ENV === 'development' && <ApiStatus />}
     </MainLayout>
   );
 };

@@ -1,64 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
+import { bengkelService } from '../../services/bengkelService';
 
 const BengkelPage = () => {
   const navigate = useNavigate();
+  const [bengkelList, setBengkelList] = useState([]);
   const [produkList, setProdukList] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [loading, setLoading] = useState(true);
-
-  // Mock data untuk demo
-  const mockProdukData = [
-    {
-      id: 1,
-      nama_produk: 'Ban Tubeless',
-      harga: 'Rp 450.000',
-      kategori: 'Ban',
-      merek: 'Michelin',
-      gambar: null
-    },
-    {
-      id: 2,
-      nama_produk: 'Aki Kering',
-      harga: 'Rp 750.000',
-      kategori: 'Aki',
-      merek: 'GS Astra',
-      gambar: null
-    },
-    {
-      id: 3,
-      nama_produk: 'Ban Motor',
-      harga: 'Rp 350.000',
-      kategori: 'Ban',
-      merek: 'Bridgestone',
-      gambar: null
-    },
-    {
-      id: 4,
-      nama_produk: 'Oli Mesin',
-      harga: 'Rp 85.000',
-      kategori: 'Oli',
-      merek: 'Shell',
-      gambar: null
-    },
-    {
-      id: 5,
-      nama_produk: 'Aki Mobil',
-      harga: 'Rp 950.000',
-      kategori: 'Aki',
-      merek: 'Yuasa',
-      gambar: null
-    },
-    {
-      id: 6,
-      nama_produk: 'Ban Radial',
-      harga: 'Rp 1.200.000',
-      kategori: 'Ban',
-      merek: 'Dunlop',
-      gambar: null
-    }
-  ];
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -66,22 +17,38 @@ const BengkelPage = () => {
 
   const fetchData = async () => {
     try {
-      // Simulasi API call - nanti bisa diganti dengan real API
-      setTimeout(() => {
-        setProdukList(mockProdukData);
-        setLoading(false);
-      }, 1000);
+      setLoading(true);
+      setError(null);
+
+      // Fetch data bengkel dan produk secara parallel
+      const [bengkelData, produkData] = await Promise.all([
+        bengkelService.getAllBengkel(),
+        bengkelService.getAllBengkelProduk()
+      ]);
+
+      console.log('Bengkel data:', bengkelData);
+      console.log('Produk data:', produkData);
+
+      setBengkelList(bengkelData.data || []);
+      setProdukList(produkData.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching bengkel data:', error);
+      setError('Gagal memuat data bengkel. Silakan coba lagi.');
+
+      // Set empty arrays on error
+      setBengkelList([]);
+      setProdukList([]);
+    } finally {
       setLoading(false);
     }
   };
 
-  const categories = ['Semua', 'Ban', 'Aki', 'Oli'];
+  // Generate categories from actual product data
+  const categories = ['Semua', ...new Set(produkList.map(produk => produk.jenis_layanan).filter(Boolean))];
 
   const filteredProduk = selectedCategory === 'Semua'
     ? produkList
-    : produkList.filter(produk => produk.kategori === selectedCategory);
+    : produkList.filter(produk => produk.jenis_layanan === selectedCategory);
 
   return (
     <MainLayout>
@@ -109,6 +76,15 @@ const BengkelPage = () => {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          </div>
+        )}
+
         {/* Services Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
@@ -123,6 +99,11 @@ const BengkelPage = () => {
               <p className="text-gray-600 mb-6">
                 Perawatan berkala, perbaikan dan service untuk semua jenis kendaraan bermotor roda dua.
               </p>
+              <div className="mb-4">
+                <p className="text-sm text-gray-500">
+                  {bengkelList.filter(b => b.jenis_kendaraan === 'motor').length} bengkel tersedia
+                </p>
+              </div>
               <button
                 onClick={() => navigate('/layanan-motor')}
                 className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
@@ -142,6 +123,11 @@ const BengkelPage = () => {
               <p className="text-gray-600 mb-6">
                 Servis berkala dan perbaikan untuk semua jenis kendaraan bermotor roda empat.
               </p>
+              <div className="mb-4">
+                <p className="text-sm text-gray-500">
+                  {bengkelList.filter(b => b.jenis_kendaraan === 'mobil').length} bengkel tersedia
+                </p>
+              </div>
               <button
                 onClick={() => navigate('/layanan-mobil')}
                 className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
@@ -202,9 +188,9 @@ const BengkelPage = () => {
                     {filteredProduk.map((produk) => (
                       <div key={produk.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
                         <div className="aspect-square bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                          {produk.gambar ? (
+                          {produk.foto_produk ? (
                             <img
-                              src={produk.gambar}
+                              src={produk.foto_produk}
                               alt={produk.nama_produk}
                               className="w-full h-full object-cover rounded-lg"
                             />
@@ -217,8 +203,12 @@ const BengkelPage = () => {
                           )}
                         </div>
                         <h4 className="font-semibold text-gray-900 mb-1">{produk.nama_produk}</h4>
-                        <p className="text-blue-600 font-bold">{produk.harga}</p>
-                        <p className="text-sm text-gray-500">{produk.merek}</p>
+                        <p className="text-blue-600 font-bold">
+                          Rp {produk.harga ? produk.harga.toLocaleString('id-ID') : '0'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {produk.Bengkel ? produk.Bengkel.nama_bengkel : 'Bengkel tidak diketahui'}
+                        </p>
                       </div>
                     ))}
                   </div>

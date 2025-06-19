@@ -1,57 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { authAPI } from '../../services/api';
+import { bookingService } from '../../services/bookingService';
 
 const BookingHistory = () => {
-  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all, pending, confirmed, completed, cancelled
 
   useEffect(() => {
-    if (user) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.id) {
       fetchBookings();
     }
-  }, [user]);
+  }, []);
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Ambil semua booking dan filter berdasarkan user
-      const response = await authAPI.get('/simple/booking');
-      const allBookings = response.data || [];
-      
-      // Filter booking milik user ini
-      const userBookings = allBookings.filter(booking => booking.userId === user.id);
-      
+      const bookingData = await bookingService.getUserBookings();
+
       // Sort berdasarkan tanggal terbaru
-      userBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
-      setBookings(userBookings);
+      const sortedBookings = (bookingData || []).sort((a, b) =>
+        new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt)
+      );
+
+      setBookings(sortedBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       setError('Gagal memuat riwayat booking');
-      
-      // Mock data untuk demo
-      setBookings([
-        {
-          id: 1,
-          layananId: 1,
-          dokterpsikologId: 1,
-          tanggal_booking: '2025-06-20',
-          jam_booking: '10:00:00',
-          status: 'confirmed',
-          total_harga: 500000,
-          payment_status: 'paid',
-          notes: 'Konsultasi stress kerja',
-          createdAt: '2025-06-16T10:00:00Z',
-          layanan: { nama_layanan: 'Psikologi' },
-          dokter: { pilih_dokter_psikolog: 'Dr. Sarah Wijaya, M.Psi' }
-        }
-      ]);
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -63,11 +42,8 @@ const BookingHistory = () => {
     }
 
     try {
-      // Update status booking menjadi cancelled
-      await authAPI.put(`/simple/booking/${bookingId}`, {
-        status: 'cancelled'
-      });
-      
+      await bookingService.cancelBooking(bookingId);
+
       // Refresh data
       await fetchBookings();
       alert('Booking berhasil dibatalkan');
@@ -110,10 +86,12 @@ const BookingHistory = () => {
     return booking.status === filter;
   });
 
-  if (!user) {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  if (!user.id) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-500">Please login to view booking history</p>
+        <p className="text-gray-500">Silakan login untuk melihat riwayat booking</p>
       </div>
     );
   }

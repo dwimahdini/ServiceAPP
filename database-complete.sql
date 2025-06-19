@@ -1,342 +1,532 @@
--- =====================================================
--- FUTURE X - COMPLETE DATABASE SCHEMA & SAMPLE DATA
--- =====================================================
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Waktu pembuatan: 18 Jun 2025 pada 00.43
+-- Versi server: 10.4.32-MariaDB
+-- Versi PHP: 8.2.12
 
--- Create Database
-CREATE DATABASE IF NOT EXISTS pintukeluar;
-USE pintukeluar;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
--- =====================================================
--- TABLE STRUCTURES
--- =====================================================
 
--- 1. Users Table
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'user') DEFAULT 'user',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
--- 2. Layanan Table (Services)
-CREATE TABLE IF NOT EXISTS layanans (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nama_layanan VARCHAR(255) NOT NULL,
-    deskripsi TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+--
+-- Database: `pintukeluar`
+--
 
--- 3. Dokter Psikolog Table (Psychology Doctors & All Providers)
-CREATE TABLE IF NOT EXISTS dokterpsikologs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    pilih_dokter_psikolog VARCHAR(255) NOT NULL,
-    spesialisasi VARCHAR(255),
-    pengalaman TEXT,
-    tarif_per_jam DECIMAL(10,2),
-    foto VARCHAR(255),
-    alamat TEXT,
-    telepon VARCHAR(20),
-    layananId INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (layananId) REFERENCES layanans(id) ON DELETE CASCADE
-);
+-- --------------------------------------------------------
 
--- 4. Durasi Table (Duration Options)
-CREATE TABLE IF NOT EXISTS durasis (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    durasi_konsultasi VARCHAR(100) NOT NULL,
-    harga DECIMAL(10,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+--
+-- Struktur dari tabel `bengkels`
+--
 
--- 5. Pilih Layanan Table (Service Selection)
-CREATE TABLE IF NOT EXISTS pilihlayanans (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nama_layanan VARCHAR(255) NOT NULL,
-    deskripsi TEXT,
-    harga DECIMAL(10,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+CREATE TABLE `bengkels` (
+  `id` int(11) NOT NULL,
+  `nama_bengkel` varchar(255) NOT NULL,
+  `alamat` text NOT NULL,
+  `telepon` varchar(20) NOT NULL,
+  `jam_buka` time NOT NULL,
+  `jam_tutup` time NOT NULL,
+  `jenis_kendaraan` enum('motor','mobil') NOT NULL DEFAULT 'motor',
+  `rating` decimal(2,1) DEFAULT 4.0,
+  `deskripsi` text DEFAULT NULL,
+  `layanan_tersedia` text DEFAULT NULL,
+  `koordinat_lat` varchar(50) DEFAULT NULL,
+  `koordinat_lng` varchar(50) DEFAULT NULL,
+  `status` enum('aktif','nonaktif') NOT NULL DEFAULT 'aktif',
+  `layananId` int(11) NOT NULL DEFAULT 2,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 6. Produk Table (Products/Services)
-CREATE TABLE IF NOT EXISTS produks (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nama_produk VARCHAR(255) NOT NULL,
-    deskripsi TEXT,
-    harga DECIMAL(10,2),
-    kategori VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+--
+-- Dumping data untuk tabel `bengkels`
+--
 
--- 7. Bookings Table
-CREATE TABLE IF NOT EXISTS bookings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    userId INT NOT NULL,
-    layananId INT NOT NULL,
-    dokterpsikologId INT NOT NULL,
-    durasiId INT NOT NULL,
-    tanggal_booking DATE NOT NULL,
-    jam_booking TIME NOT NULL,
-    status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
-    total_harga DECIMAL(10,2) NOT NULL,
-    payment_status ENUM('unpaid', 'paid', 'refunded') DEFAULT 'unpaid',
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (layananId) REFERENCES layanans(id) ON DELETE CASCADE,
-    FOREIGN KEY (dokterpsikologId) REFERENCES dokterpsikologs(id) ON DELETE CASCADE,
-    FOREIGN KEY (durasiId) REFERENCES durasis(id) ON DELETE CASCADE
-);
+INSERT INTO `bengkels` (`id`, `nama_bengkel`, `alamat`, `telepon`, `jam_buka`, `jam_tutup`, `jenis_kendaraan`, `rating`, `deskripsi`, `layanan_tersedia`, `koordinat_lat`, `koordinat_lng`, `status`, `layananId`, `created_at`, `updated_at`) VALUES
+(8, 'Bengkel Ahmad', 'Jl. Yang Lurus Sekali', '081215660192', '06:15:00', '19:00:00', 'motor', 4.0, 'Keren', 'Service Rutin', NULL, NULL, 'aktif', 2, '2025-06-17 21:12:19', '2025-06-17 21:13:44');
 
--- 8. Payments Table
-CREATE TABLE IF NOT EXISTS payments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    booking_id INT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    payment_method ENUM('transfer_bank', 'e_wallet', 'cash', 'credit_card') NOT NULL,
-    payment_proof VARCHAR(255),
-    payment_date DATETIME,
-    status ENUM('pending', 'success', 'failed', 'cancelled') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
-);
+-- --------------------------------------------------------
 
--- 9. Schedule Validations Table
-CREATE TABLE IF NOT EXISTS schedulevalidations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    dokterpsikolog_id INT NOT NULL,
-    tanggal DATE NOT NULL,
-    jam_mulai TIME NOT NULL,
-    jam_selesai TIME NOT NULL,
-    is_available BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (dokterpsikolog_id) REFERENCES dokterpsikologs(id) ON DELETE CASCADE
-);
+--
+-- Struktur dari tabel `bengkel_produk`
+--
 
--- =====================================================
--- SAMPLE DATA
--- =====================================================
+CREATE TABLE `bengkel_produk` (
+  `id` int(11) NOT NULL,
+  `bengkel_id` int(11) NOT NULL,
+  `nama_produk` varchar(255) NOT NULL,
+  `harga` decimal(10,2) NOT NULL,
+  `foto_produk` varchar(255) DEFAULT NULL,
+  `jenis_layanan` enum('semua_jenis_layanan','service_rutin','perbaikan_mesin','ganti_ban','ganti_oli','tune_up','service_berkala') NOT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `status` enum('aktif','nonaktif') NOT NULL DEFAULT 'aktif',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Insert Admin User (Password: admin123 - hashed with bcrypt)
-INSERT INTO users (name, email, password, role) VALUES
-('Admin Future X', 'admin@futurex.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+--
+-- Dumping data untuk tabel `bengkel_produk`
+--
 
--- Insert Sample Users (Password: password123 for all)
-INSERT INTO users (name, email, password, role) VALUES
-('John Doe', 'john@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user'),
-('Jane Smith', 'jane@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user'),
-('Bob Wilson', 'bob@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user'),
-('Alice Brown', 'alice@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user'),
-('Charlie Davis', 'charlie@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user');
+INSERT INTO `bengkel_produk` (`id`, `bengkel_id`, `nama_produk`, `harga`, `foto_produk`, `jenis_layanan`, `deskripsi`, `status`, `created_at`, `updated_at`) VALUES
+(1, 8, 'Ban', 30000.00, '', 'service_rutin', 'ban', 'aktif', '2025-06-17 21:12:59', '2025-06-17 21:12:59'),
+(2, 8, 'Ban', 200000.00, NULL, 'perbaikan_mesin', 'keren', 'aktif', '2025-06-17 22:39:32', '2025-06-17 22:39:32');
 
--- Insert Main Services
-INSERT INTO layanans (nama_layanan, deskripsi) VALUES 
-('Psikologi', 'Layanan konsultasi psikologi dengan dokter berpengalaman'),
-('Bengkel', 'Layanan perbaikan kendaraan bermotor dan mobil'),
-('Opo Wae', 'Layanan kebutuhan sehari-hari seperti driver, cleaning service, dll');
+-- --------------------------------------------------------
 
--- Insert Psychology Doctors
-INSERT INTO dokterpsikologs (pilih_dokter_psikolog, spesialisasi, pengalaman, tarif_per_jam, layananId) VALUES 
-('Dr. Sarah Wijaya, M.Psi', 'Psikologi Klinis', '8 tahun pengalaman menangani kasus depresi dan anxiety', 500000, 1),
-('Dr. Ahmad Rahman, M.Psi', 'Psikologi Anak', '10 tahun pengalaman terapi anak dan remaja', 450000, 1),
-('Dr. Maya Sari, M.Psi', 'Psikologi Keluarga', '6 tahun pengalaman konseling keluarga dan pernikahan', 400000, 1);
+--
+-- Struktur dari tabel `bookings`
+--
 
--- Insert Bengkel Providers
-INSERT INTO dokterpsikologs (pilih_dokter_psikolog, spesialisasi, pengalaman, tarif_per_jam, layananId) VALUES 
-('Bengkel Motor Jaya', 'Service Motor', 'Spesialis perbaikan motor semua merk', 150000, 2),
-('Auto Care Center', 'Service Mobil', 'Bengkel mobil dengan teknisi bersertifikat', 300000, 2),
-('Bengkel Umum Sejahtera', 'Motor & Mobil', 'Melayani perbaikan motor dan mobil', 200000, 2);
+CREATE TABLE `bookings` (
+  `id` int(11) NOT NULL,
+  `jam_booking` time NOT NULL,
+  `tanggal_booking` date NOT NULL,
+  `status` enum('pending','confirmed','completed','cancelled') NOT NULL DEFAULT 'pending',
+  `userId` int(11) NOT NULL,
+  `layananId` int(11) NOT NULL,
+  `dokterpsikologId` int(11) NOT NULL,
+  `durasiId` int(11) NOT NULL,
+  `total_harga` decimal(10,2) NOT NULL,
+  `payment_status` enum('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid',
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert Opo Wae Providers
-INSERT INTO dokterpsikologs (pilih_dokter_psikolog, spesialisasi, pengalaman, tarif_per_jam, layananId) VALUES 
-('Driver Profesional', 'Driver Pribadi', 'Driver berpengalaman untuk perjalanan dalam kota', 50000, 3),
-('Cleaning Service Pro', 'Pembersihan Rumah', 'Layanan pembersihan rumah dan kantor', 75000, 3),
-('Tukang Pijat Tradisional', 'Pijat Kesehatan', 'Pijat tradisional untuk kesehatan dan relaksasi', 100000, 3);
+--
+-- Dumping data untuk tabel `bookings`
+--
 
--- Insert Duration Options
-INSERT INTO durasis (durasi_konsultasi, harga) VALUES 
-('30 menit', 200000),
-('60 menit', 350000),
-('90 menit', 500000),
-('2 jam', 650000),
-('3 jam', 900000),
-('4 jam', 1200000),
-('5 jam', 1500000),
-('6 jam', 1800000),
-('8 jam', 2400000);
+INSERT INTO `bookings` (`id`, `jam_booking`, `tanggal_booking`, `status`, `userId`, `layananId`, `dokterpsikologId`, `durasiId`, `total_harga`, `payment_status`, `notes`, `created_at`, `updated_at`) VALUES
+(4, '09:00:00', '2024-12-20', 'confirmed', 2, 2, 4, 4, 300000.00, 'paid', 'Service rutin motor', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(5, '13:00:00', '2024-12-20', 'pending', 3, 2, 5, 5, 900000.00, 'unpaid', 'Tune up mobil lengkap', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(6, '15:00:00', '2024-12-20', 'confirmed', 4, 2, 6, 6, 300000.00, 'paid', 'Ganti oli dan filter', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(7, '07:00:00', '2024-12-20', 'confirmed', 2, 3, 7, 7, 400000.00, 'paid', 'Driver untuk perjalanan ke Bandung', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(8, '10:00:00', '2024-12-20', 'pending', 3, 3, 8, 8, 240000.00, 'unpaid', 'Bersih-bersih rumah', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(9, '16:00:00', '2024-12-20', 'confirmed', 4, 3, 9, 9, 240000.00, 'paid', 'Pijat tradisional di rumah', '2025-06-16 19:47:08', '2025-06-16 19:47:08');
 
--- Insert Sample Bookings
-INSERT INTO bookings (userId, layananId, dokterpsikologId, durasiId, tanggal_booking, jam_booking, status, total_harga, payment_status, notes) VALUES 
-(2, 1, 1, 2, '2025-06-20', '10:00:00', 'confirmed', 500000, 'paid', 'Konsultasi stress kerja'),
-(3, 1, 2, 1, '2025-06-21', '14:00:00', 'pending', 300000, 'unpaid', 'Konsultasi anak'),
-(4, 2, 4, 3, '2025-06-22', '09:00:00', 'confirmed', 450000, 'paid', 'Service motor rutin'),
-(5, 2, 5, 4, '2025-06-23', '11:00:00', 'pending', 600000, 'unpaid', 'Perbaikan mobil'),
-(6, 3, 7, 5, '2025-06-24', '08:00:00', 'completed', 750000, 'paid', 'Driver untuk acara'),
-(2, 3, 8, 2, '2025-06-25', '15:00:00', 'confirmed', 350000, 'paid', 'Cleaning service rumah'),
-(3, 1, 3, 2, '2025-06-26', '16:00:00', 'pending', 400000, 'unpaid', 'Konseling keluarga'),
-(4, 3, 9, 1, '2025-06-27', '18:00:00', 'confirmed', 200000, 'paid', 'Pijat relaksasi'),
-(5, 1, 1, 3, '2025-06-28', '13:00:00', 'pending', 500000, 'unpaid', 'Follow up konsultasi');
+-- --------------------------------------------------------
 
--- Insert Sample Payments
-INSERT INTO payments (booking_id, amount, payment_method, payment_date, status) VALUES 
-(1, 500000, 'transfer_bank', '2025-06-16 09:30:00', 'success'),
-(3, 450000, 'e_wallet', '2025-06-16 10:15:00', 'success'),
-(5, 750000, 'cash', '2025-06-16 11:00:00', 'success'),
-(6, 350000, 'transfer_bank', '2025-06-16 12:30:00', 'success'),
-(8, 200000, 'e_wallet', '2025-06-16 14:00:00', 'success'),
-(2, 300000, 'transfer_bank', NULL, 'pending');
+--
+-- Struktur dari tabel `dokterpsikologs`
+--
 
--- Insert Schedule Validations
-INSERT INTO schedulevalidations (dokterpsikolog_id, tanggal, jam_mulai, jam_selesai, is_available) VALUES 
-(1, '2025-06-20', '09:00:00', '17:00:00', TRUE),
-(1, '2025-06-21', '09:00:00', '17:00:00', TRUE),
-(2, '2025-06-20', '10:00:00', '16:00:00', TRUE),
-(2, '2025-06-22', '10:00:00', '16:00:00', TRUE),
-(3, '2025-06-21', '13:00:00', '18:00:00', TRUE),
-(4, '2025-06-20', '08:00:00', '17:00:00', TRUE),
-(5, '2025-06-21', '08:00:00', '17:00:00', TRUE),
-(6, '2025-06-22', '08:00:00', '17:00:00', TRUE),
-(7, '2025-06-20', '07:00:00', '19:00:00', TRUE),
-(8, '2025-06-21', '08:00:00', '18:00:00', TRUE),
-(9, '2025-06-22', '16:00:00', '22:00:00', TRUE);
+CREATE TABLE `dokterpsikologs` (
+  `id` int(11) NOT NULL,
+  `pilih_dokter_psikolog` varchar(255) NOT NULL,
+  `spesialisasi` varchar(255) DEFAULT NULL,
+  `pengalaman` text DEFAULT NULL,
+  `tarif_per_jam` decimal(10,2) DEFAULT NULL,
+  `foto` varchar(255) DEFAULT NULL,
+  `alamat` text DEFAULT NULL,
+  `telepon` varchar(20) DEFAULT NULL,
+  `layananId` int(11) NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert Sample Pilih Layanan
-INSERT INTO pilihlayanans (nama_layanan, deskripsi, harga) VALUES 
-('Konsultasi Psikologi Online', 'Konsultasi psikologi melalui video call', 300000),
-('Konsultasi Psikologi Offline', 'Konsultasi psikologi tatap muka', 500000),
-('Service Motor Ringan', 'Service rutin motor (ganti oli, tune up)', 150000),
-('Service Motor Berat', 'Perbaikan besar motor (mesin, transmisi)', 500000),
-('Service Mobil Ringan', 'Service rutin mobil (ganti oli, filter)', 300000),
-('Service Mobil Berat', 'Perbaikan besar mobil (mesin, transmisi)', 1000000);
+--
+-- Dumping data untuk tabel `dokterpsikologs`
+--
 
--- Insert Sample Produk
-INSERT INTO produks (nama_produk, deskripsi, harga, kategori) VALUES 
-('Paket Konsultasi 3x', 'Paket 3 kali konsultasi psikologi', 1200000, 'Psikologi'),
-('Paket Service Motor Tahunan', 'Paket service motor untuk 1 tahun', 800000, 'Bengkel'),
-('Paket Cleaning Bulanan', 'Paket cleaning service untuk 1 bulan', 1500000, 'Opo Wae'),
-('Paket Driver Harian', 'Paket driver untuk kebutuhan harian', 500000, 'Opo Wae');
+INSERT INTO `dokterpsikologs` (`id`, `pilih_dokter_psikolog`, `spesialisasi`, `pengalaman`, `tarif_per_jam`, `foto`, `alamat`, `telepon`, `layananId`, `createdAt`, `updatedAt`) VALUES
+(4, 'Bengkel Jaya Motor', 'Service Motor', 'Bengkel motor terpercaya sejak 2010', 150000.00, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(5, 'Auto Care Center', 'Service Mobil', 'Spesialis service mobil dan tune up', 300000.00, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(6, 'Bengkel Mitra Sejati', 'Service Umum', 'Melayani service motor dan mobil', 200000.00, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(7, 'Driver Profesional', 'Jasa Driver', 'Driver berpengalaman untuk perjalanan dalam dan luar kota', 100000.00, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(8, 'Cleaning Service Pro', 'Jasa Bersih-bersih', 'Layanan pembersihan rumah dan kantor', 80000.00, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(9, 'Tukang Pijat Tradisional', 'Jasa Pijat', 'Pijat tradisional untuk kesehatan dan relaksasi', 120000.00, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(14, 'Dwi Mahdini', 'Psikolog Cinta', 'Dokter Psikologi Cinta Ternama', 400000.00, NULL, NULL, NULL, 1, '2025-06-16 21:03:26', '2025-06-16 21:03:26');
 
--- =====================================================
--- INDEXES FOR PERFORMANCE
--- =====================================================
+-- --------------------------------------------------------
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_bookings_user ON bookings(userId);
-CREATE INDEX idx_bookings_layanan ON bookings(layananId);
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_bookings_date ON bookings(tanggal_booking);
-CREATE INDEX idx_payments_booking ON payments(booking_id);
-CREATE INDEX idx_payments_status ON payments(status);
-CREATE INDEX idx_dokterpsikologs_layanan ON dokterpsikologs(layananId);
-CREATE INDEX idx_schedulevalidations_dokter ON schedulevalidations(dokterpsikolog_id);
-CREATE INDEX idx_schedulevalidations_date ON schedulevalidations(tanggal);
+--
+-- Struktur dari tabel `durasis`
+--
 
--- =====================================================
--- VIEWS FOR EASY QUERYING
--- =====================================================
+CREATE TABLE `durasis` (
+  `id` int(11) NOT NULL,
+  `durasi` int(11) NOT NULL,
+  `userId` int(11) NOT NULL,
+  `layananId` int(11) NOT NULL,
+  `dokterpsikologId` int(11) NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- View for complete booking information
-CREATE OR REPLACE VIEW booking_details AS
-SELECT 
-    b.id as booking_id,
-    u.name as user_name,
-    u.email as user_email,
-    l.nama_layanan as service_name,
-    d.pilih_dokter_psikolog as provider_name,
-    d.spesialisasi as provider_specialty,
-    dur.durasi_konsultasi as duration,
-    b.tanggal_booking,
-    b.jam_booking,
-    b.status as booking_status,
-    b.total_harga,
-    b.payment_status,
-    b.notes,
-    b.created_at as booking_created
-FROM bookings b
-JOIN users u ON b.userId = u.id
-JOIN layanans l ON b.layananId = l.id
-JOIN dokterpsikologs d ON b.dokterpsikologId = d.id
-JOIN durasis dur ON b.durasiId = dur.id;
+--
+-- Dumping data untuk tabel `durasis`
+--
 
--- View for service statistics
-CREATE OR REPLACE VIEW service_stats AS
-SELECT 
-    l.id as service_id,
-    l.nama_layanan as service_name,
-    COUNT(DISTINCT d.id) as total_providers,
-    COUNT(DISTINCT b.id) as total_bookings,
-    COALESCE(SUM(b.total_harga), 0) as total_revenue,
-    COUNT(CASE WHEN b.status = 'completed' THEN 1 END) as completed_bookings,
-    COUNT(CASE WHEN b.status = 'pending' THEN 1 END) as pending_bookings
-FROM layanans l
-LEFT JOIN dokterpsikologs d ON l.id = d.layananId
-LEFT JOIN bookings b ON l.id = b.layananId
-GROUP BY l.id, l.nama_layanan;
+INSERT INTO `durasis` (`id`, `durasi`, `userId`, `layananId`, `dokterpsikologId`, `createdAt`, `updatedAt`) VALUES
+(4, 120, 2, 2, 4, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(5, 180, 3, 2, 5, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(6, 90, 4, 2, 6, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(7, 240, 2, 3, 7, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(8, 180, 3, 3, 8, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(9, 120, 4, 3, 9, '2025-06-16 19:47:08', '2025-06-16 19:47:08');
 
--- =====================================================
--- STORED PROCEDURES
--- =====================================================
+-- --------------------------------------------------------
 
-DELIMITER //
+--
+-- Struktur dari tabel `layanans`
+--
 
--- Procedure to get dashboard statistics
-CREATE PROCEDURE GetDashboardStats()
-BEGIN
-    SELECT 
-        (SELECT COUNT(*) FROM users WHERE role = 'user') as total_users,
-        (SELECT COUNT(*) FROM users WHERE role = 'admin') as total_admins,
-        (SELECT COUNT(*) FROM layanans) as total_services,
-        (SELECT COUNT(*) FROM dokterpsikologs) as total_providers,
-        (SELECT COUNT(*) FROM bookings) as total_bookings,
-        (SELECT COUNT(*) FROM bookings WHERE status = 'pending') as pending_bookings,
-        (SELECT COUNT(*) FROM bookings WHERE status = 'confirmed') as confirmed_bookings,
-        (SELECT COUNT(*) FROM bookings WHERE status = 'completed') as completed_bookings,
-        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE status = 'success') as total_revenue,
-        (SELECT COUNT(*) FROM payments WHERE status = 'pending') as pending_payments;
-END //
+CREATE TABLE `layanans` (
+  `id` int(11) NOT NULL,
+  `nama_layanan` varchar(255) NOT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DELIMITER ;
+--
+-- Dumping data untuk tabel `layanans`
+--
 
--- =====================================================
--- TRIGGERS
--- =====================================================
+INSERT INTO `layanans` (`id`, `nama_layanan`, `deskripsi`, `createdAt`, `updatedAt`) VALUES
+(1, 'Psikologi', 'Layanan konsultasi psikologi dengan dokter berpengalaman', '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(2, 'Bengkel', 'Layanan pencarian bengkel berdasarkan lokasi terdekat', '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(3, 'Opo Wae', 'Layanan kebutuhan sehari-hari seperti driver dan cleaning service', '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(4, 'Test Service CRUD', 'Layanan untuk testing CRUD functionality', '2025-06-16 20:42:34', '2025-06-16 20:42:34');
 
-DELIMITER //
+-- --------------------------------------------------------
 
--- Trigger to update booking payment status when payment is successful
-CREATE TRIGGER update_booking_payment_status
-AFTER UPDATE ON payments
-FOR EACH ROW
-BEGIN
-    IF NEW.status = 'success' AND OLD.status != 'success' THEN
-        UPDATE bookings 
-        SET payment_status = 'paid' 
-        WHERE id = NEW.booking_id;
-    END IF;
-END //
+--
+-- Struktur dari tabel `payments`
+--
 
-DELIMITER ;
+CREATE TABLE `payments` (
+  `id` int(11) NOT NULL,
+  `booking_id` int(11) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `payment_method` enum('transfer_bank','e_wallet','cash','credit_card') NOT NULL,
+  `payment_proof` varchar(255) DEFAULT NULL,
+  `payment_date` timestamp NULL DEFAULT NULL,
+  `status` enum('pending','success','failed','cancelled') NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =====================================================
--- FINAL NOTES
--- =====================================================
+--
+-- Dumping data untuk tabel `payments`
+--
 
--- Database setup complete!
--- Default admin login: admin@futurex.com / admin123
--- Sample data includes 6 users, 3 services, 9 providers, 9 bookings, 6 payments
--- All foreign key relationships are properly set up
--- Indexes added for performance optimization
--- Views created for easy data retrieval
--- Stored procedures for dashboard statistics
--- Triggers for automatic data consistency
+INSERT INTO `payments` (`id`, `booking_id`, `amount`, `payment_method`, `payment_proof`, `payment_date`, `status`, `created_at`, `updated_at`) VALUES
+(3, 4, 300000.00, 'cash', NULL, '2024-12-20 02:00:00', 'success', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(4, 6, 300000.00, 'transfer_bank', NULL, '2024-12-19 13:15:00', 'success', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(5, 7, 400000.00, 'e_wallet', NULL, '2024-12-19 11:20:00', 'success', '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(6, 9, 240000.00, 'cash', NULL, '2024-12-20 09:00:00', 'success', '2025-06-16 19:47:08', '2025-06-16 19:47:08');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `pilihlayanans`
+--
+
+CREATE TABLE `pilihlayanans` (
+  `id` int(11) NOT NULL,
+  `nama_pilihan` varchar(255) NOT NULL,
+  `harga` decimal(10,2) NOT NULL,
+  `layananId` int(11) NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `produks`
+--
+
+CREATE TABLE `produks` (
+  `id` int(11) NOT NULL,
+  `nama_produk` varchar(255) NOT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `harga` decimal(10,2) NOT NULL,
+  `stok` int(11) NOT NULL DEFAULT 0,
+  `layananId` int(11) NOT NULL,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `schedulevalidations`
+--
+
+CREATE TABLE `schedulevalidations` (
+  `id` int(11) NOT NULL,
+  `dokterpsikolog_id` int(11) NOT NULL,
+  `tanggal` date NOT NULL,
+  `jam_mulai` time NOT NULL,
+  `jam_selesai` time NOT NULL,
+  `is_available` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data untuk tabel `schedulevalidations`
+--
+
+INSERT INTO `schedulevalidations` (`id`, `dokterpsikolog_id`, `tanggal`, `jam_mulai`, `jam_selesai`, `is_available`, `created_at`) VALUES
+(6, 4, '2024-12-20', '08:00:00', '18:00:00', 1, '2025-06-16 19:47:08'),
+(7, 5, '2024-12-20', '07:00:00', '19:00:00', 1, '2025-06-16 19:47:08'),
+(8, 6, '2024-12-20', '08:30:00', '17:30:00', 1, '2025-06-16 19:47:08'),
+(9, 7, '2024-12-20', '06:00:00', '22:00:00', 1, '2025-06-16 19:47:08'),
+(10, 8, '2024-12-20', '08:00:00', '17:00:00', 1, '2025-06-16 19:47:08'),
+(11, 9, '2024-12-20', '10:00:00', '20:00:00', 1, '2025-06-16 19:47:08');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('admin','user') NOT NULL DEFAULT 'user',
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data untuk tabel `users`
+--
+
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `createdAt`, `updatedAt`) VALUES
+(1, 'Admin Future X', 'admin@futurex.com', '$2b$10$Ymptu63vHnJqyOr5xlMRa.yc0ohaBW5hRjIqIM8K0QMIDof88G6ZK', 'admin', '2025-06-16 19:47:07', '2025-06-16 20:21:05'),
+(2, 'John Doe', 'john@gmail.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi$2y$10$Hhq09YrQk38ozhqkP4dcVe5Q914x2A.M75Z6M6BIroC1MIge0Sqeq', 'user', '2025-06-16 19:47:07', '2025-06-16 20:16:49'),
+(3, 'Jane Smith', 'jane@gmail.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user', '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(4, 'Ahmad Rizki', 'ahmad@gmail.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user', '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(5, 'Siti Nurhaliza', 'siti@gmail.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user', '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(6, 'dwi', 'dwimahdini12@gmail.com', '$2b$10$MK3l9ZHpzs2zFzi7i6FT4ep5lOON4FCzJT.X4yHm0jrNvFDfGiV7q', 'user', '2025-06-16 20:18:07', '2025-06-16 20:18:07');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indeks untuk tabel `bengkels`
+--
+ALTER TABLE `bengkels`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indeks untuk tabel `bengkel_produk`
+--
+ALTER TABLE `bengkel_produk`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `bengkel_id` (`bengkel_id`);
+
+--
+-- Indeks untuk tabel `bookings`
+--
+ALTER TABLE `bookings`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `userId` (`userId`),
+  ADD KEY `layananId` (`layananId`),
+  ADD KEY `dokterpsikologId` (`dokterpsikologId`),
+  ADD KEY `durasiId` (`durasiId`);
+
+--
+-- Indeks untuk tabel `dokterpsikologs`
+--
+ALTER TABLE `dokterpsikologs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `layananId` (`layananId`);
+
+--
+-- Indeks untuk tabel `durasis`
+--
+ALTER TABLE `durasis`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `userId` (`userId`),
+  ADD KEY `layananId` (`layananId`),
+  ADD KEY `dokterpsikologId` (`dokterpsikologId`);
+
+--
+-- Indeks untuk tabel `layanans`
+--
+ALTER TABLE `layanans`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indeks untuk tabel `payments`
+--
+ALTER TABLE `payments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `booking_id` (`booking_id`);
+
+--
+-- Indeks untuk tabel `pilihlayanans`
+--
+ALTER TABLE `pilihlayanans`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `layananId` (`layananId`);
+
+--
+-- Indeks untuk tabel `produks`
+--
+ALTER TABLE `produks`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `layananId` (`layananId`);
+
+--
+-- Indeks untuk tabel `schedulevalidations`
+--
+ALTER TABLE `schedulevalidations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `dokterpsikolog_id` (`dokterpsikolog_id`);
+
+--
+-- Indeks untuk tabel `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- AUTO_INCREMENT untuk tabel yang dibuang
+--
+
+--
+-- AUTO_INCREMENT untuk tabel `bengkels`
+--
+ALTER TABLE `bengkels`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT untuk tabel `bengkel_produk`
+--
+ALTER TABLE `bengkel_produk`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT untuk tabel `bookings`
+--
+ALTER TABLE `bookings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT untuk tabel `dokterpsikologs`
+--
+ALTER TABLE `dokterpsikologs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT untuk tabel `durasis`
+--
+ALTER TABLE `durasis`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT untuk tabel `layanans`
+--
+ALTER TABLE `layanans`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT untuk tabel `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT untuk tabel `pilihlayanans`
+--
+ALTER TABLE `pilihlayanans`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `produks`
+--
+ALTER TABLE `produks`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT untuk tabel `schedulevalidations`
+--
+ALTER TABLE `schedulevalidations`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT untuk tabel `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
+--
+
+--
+-- Ketidakleluasaan untuk tabel `bengkel_produk`
+--
+ALTER TABLE `bengkel_produk`
+  ADD CONSTRAINT `bengkel_produk_ibfk_1` FOREIGN KEY (`bengkel_id`) REFERENCES `bengkels` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `bookings`
+--
+ALTER TABLE `bookings`
+  ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `bookings_ibfk_2` FOREIGN KEY (`layananId`) REFERENCES `layanans` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `bookings_ibfk_3` FOREIGN KEY (`dokterpsikologId`) REFERENCES `dokterpsikologs` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `bookings_ibfk_4` FOREIGN KEY (`durasiId`) REFERENCES `durasis` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `dokterpsikologs`
+--
+ALTER TABLE `dokterpsikologs`
+  ADD CONSTRAINT `dokterpsikologs_ibfk_1` FOREIGN KEY (`layananId`) REFERENCES `layanans` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `durasis`
+--
+ALTER TABLE `durasis`
+  ADD CONSTRAINT `durasis_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `durasis_ibfk_2` FOREIGN KEY (`layananId`) REFERENCES `layanans` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `durasis_ibfk_3` FOREIGN KEY (`dokterpsikologId`) REFERENCES `dokterpsikologs` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `payments`
+--
+ALTER TABLE `payments`
+  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `pilihlayanans`
+--
+ALTER TABLE `pilihlayanans`
+  ADD CONSTRAINT `pilihlayanans_ibfk_1` FOREIGN KEY (`layananId`) REFERENCES `layanans` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `produks`
+--
+ALTER TABLE `produks`
+  ADD CONSTRAINT `produks_ibfk_1` FOREIGN KEY (`layananId`) REFERENCES `layanans` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `schedulevalidations`
+--
+ALTER TABLE `schedulevalidations`
+  ADD CONSTRAINT `schedulevalidations_ibfk_1` FOREIGN KEY (`dokterpsikolog_id`) REFERENCES `dokterpsikologs` (`id`) ON DELETE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

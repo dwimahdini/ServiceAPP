@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL untuk API backend
-const API_BASE_URL = 'http://localhost:3002'; // Backend berjalan di port 3002
+const API_BASE_URL = 'http://localhost:3001'; // Backend berjalan di port 3001
 
 // Membuat instance axios
 const api = axios.create({
@@ -71,8 +71,8 @@ export const pilihLayananAPI = {
   getAll: () => api.get('/getpilihlayanan'),
 };
 
-// Produk API functions
-export const produkAPI = {
+// Produk API functions (legacy)
+export const produkLegacyAPI = {
   create: (data) => api.post('/tambahproduk', data),
   getAll: () => api.get('/getproduk'),
 };
@@ -106,5 +106,24 @@ export const bookingAPI = {
   create: (data) => api.post('/tambahbooking', data),
   getAll: () => api.get('/getbooking'),
 };
+
+// Bengkel API functions
+export const bengkelAPI = {
+  create: (data) => api.post('/bengkel', data),
+  getAll: () => api.get('/bengkel'),
+  getByJenis: (jenis) => api.get(`/bengkel/jenis/${jenis}`),
+  getById: (id) => api.get(`/bengkel/${id}`),
+  getProdukByBengkel: (bengkelId) => api.get(`/bengkel/${bengkelId}/produk`),
+};
+
+// Bengkel Produk API functions
+export const bengkelProdukAPI = {
+  getAll: () => api.get('/bengkel-produk'),
+  getByBengkel: (bengkelId) => api.get(`/bengkel/${bengkelId}/produk`),
+  getByJenisLayanan: (jenisLayanan) => api.get(`/bengkel-produk/jenis/${jenisLayanan}`),
+};
+
+// Alias untuk backward compatibility
+export const produkAPI = bengkelProdukAPI;
 
 export default api;

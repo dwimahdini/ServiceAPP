@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { authAPI } from '../../services/api';
+import { bengkelService } from '../../services/bengkelService';
 
 const ProdukBengkelManagement = () => {
   const [produkBengkel, setProdukBengkel] = useState([]);
-  const [layananBengkel, setLayananBengkel] = useState([]);
+  const [bengkelList, setBengkelList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduk, setEditingProduk] = useState(null);
   const [formData, setFormData] = useState({
+    bengkel_id: '',
     nama_produk: '',
-    pilihlayananId: '',
     harga: '',
-    stok: '',
-    deskripsi: '',
-    kategori_produk: 'oli'
+    foto_produk: '',
+    jenis_layanan: 'semua_jenis_layanan',
+    deskripsi: ''
   });
 
   useEffect(() => {
@@ -23,102 +24,173 @@ const ProdukBengkelManagement = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch produk dan layanan bengkel
-      const [produkResponse, layananResponse] = await Promise.all([
-        authAPI.get('/getproduk'),
-        authAPI.get('/getpilihlayanan')
+      console.log('🔄 Fetching all bengkel products from DATABASE...');
+
+      // Fetch semua produk bengkel dan daftar bengkel dari API
+      const [produkResponse, bengkelResponse] = await Promise.all([
+        bengkelService.getAllBengkelProduk(),
+        bengkelService.getAllBengkel()
       ]);
-      
-      // Filter produk untuk layanan bengkel (layananId = 2)
-      const bengkelProducts = produkResponse.data?.filter(item => item.layananId === 2) || [];
-      setProdukBengkel(bengkelProducts);
-      
-      // Filter layanan bengkel
-      const bengkelServices = layananResponse.data?.filter(item => item.layananId === 2) || [];
-      setLayananBengkel(bengkelServices);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      // Fallback dengan data mock
-      setProdukBengkel([
-        {
-          id: 1,
-          nama_produk: 'Oli Mesin Yamalube',
-          pilihlayananId: 1,
-          layanan_nama: 'Ganti Oli',
-          harga: 45000,
-          stok: 50,
-          deskripsi: 'Oli mesin berkualitas tinggi untuk motor Yamaha',
-          kategori_produk: 'oli',
-          layananId: 2
-        },
-        {
-          id: 2,
-          nama_produk: 'Ban Tubeless IRC',
-          pilihlayananId: 2,
-          layanan_nama: 'Ganti Ban',
-          harga: 180000,
-          stok: 25,
-          deskripsi: 'Ban tubeless ukuran 80/90-14 untuk motor matic',
-          kategori_produk: 'ban',
-          layananId: 2
-        },
-        {
-          id: 3,
-          nama_produk: 'Kampas Rem Depan',
-          pilihlayananId: 3,
-          layanan_nama: 'Service Berkala',
-          harga: 35000,
-          stok: 30,
-          deskripsi: 'Kampas rem depan untuk berbagai jenis motor',
-          kategori_produk: 'spare_part',
-          layananId: 2
+
+      console.log('📊 Produk response:', produkResponse);
+      console.log('🏪 Bengkel response:', bengkelResponse);
+
+      if (produkResponse.success && produkResponse.data) {
+        const produkData = produkResponse.data;
+        console.log('✅ Setting produk from DATABASE:', produkData);
+        console.log('🔢 Total products:', produkData.length);
+
+        // Log sample products for debugging
+        if (produkData.length > 0) {
+          console.log('📋 Sample products:');
+          produkData.slice(0, 3).forEach((produk, index) => {
+            console.log(`Product ${index + 1}:`, {
+              id: produk.id,
+              nama_produk: produk.nama_produk,
+              harga: produk.harga,
+              bengkel: produk.Bengkel?.nama_bengkel,
+              jenis_layanan: produk.jenis_layanan
+            });
+          });
         }
-      ]);
-      
-      setLayananBengkel([
-        { id: 1, nama_pilih_layanan: 'Ganti Oli' },
-        { id: 2, nama_pilih_layanan: 'Ganti Ban' },
-        { id: 3, nama_pilih_layanan: 'Service Berkala' }
-      ]);
+
+        setProdukBengkel(produkData);
+      } else {
+        console.log('⚠️ API call unsuccessful or no data:', produkResponse.error || produkResponse.message);
+        console.log('🔄 Using fallback data');
+        loadFallbackData();
+      }
+
+      if (bengkelResponse.success && bengkelResponse.data) {
+        setBengkelList(bengkelResponse.data);
+        console.log(`✅ Loaded ${bengkelResponse.data.length} bengkel`);
+      } else {
+        console.log('⚠️ Using fallback bengkel list');
+        // Fallback bengkel list
+        setBengkelList([
+          {
+            id: 8,
+            nama_bengkel: 'Bengkel Ahmad',
+            jenis_kendaraan: 'motor',
+            alamat: 'Jl. Yang Lurus Sekali',
+            status: 'aktif'
+          }
+        ]);
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching data:', error);
+      console.log('🔄 Using fallback data due to API error');
+      loadFallbackData();
     } finally {
       setLoading(false);
     }
   };
 
+  const loadAllProdukFromStorage = () => {
+    try {
+      // Load data from all bengkel localStorage
+      const allProduk = [];
+
+      // Check localStorage for each bengkel (we know bengkel 8 exists)
+      for (let bengkelId = 1; bengkelId <= 20; bengkelId++) {
+        const storageKey = `bengkel_produk_${bengkelId}`;
+        const savedData = localStorage.getItem(storageKey);
+
+        if (savedData) {
+          const parsedData = JSON.parse(savedData);
+          // Add bengkel info to each product
+          const produkWithBengkel = parsedData.map(produk => ({
+            ...produk,
+            Bengkel: {
+              id: bengkelId,
+              nama_bengkel: bengkelId === 8 ? 'Bengkel Ahmad' : `Bengkel ${bengkelId}`,
+              jenis_kendaraan: 'motor'
+            }
+          }));
+          allProduk.push(...produkWithBengkel);
+        }
+      }
+
+      return allProduk;
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+      return [];
+    }
+  };
+
+  const loadFallbackData = () => {
+    console.log('⚠️ Loading fallback data - database might be empty');
+
+    // Show empty state when database is empty
+    setProdukBengkel([]);
+    console.log('💡 Database kosong. Silakan tambah produk baru.');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('Submitting form data:', formData);
+
       const submitData = {
-        ...formData,
-        layananId: 2, // ID untuk layanan Bengkel
-        pilihlayananId: parseInt(formData.pilihlayananId),
-        harga: parseInt(formData.harga),
-        stok: parseInt(formData.stok)
+        bengkel_id: parseInt(formData.bengkel_id),
+        nama_produk: formData.nama_produk,
+        harga: parseFloat(formData.harga),
+        foto_produk: formData.foto_produk || null,
+        jenis_layanan: formData.jenis_layanan,
+        deskripsi: formData.deskripsi || '',
+        status: 'aktif'
       };
 
       if (editingProduk) {
-        await authAPI.put(`/produk/${editingProduk.id}`, submitData);
+        // Update existing product via API
+        console.log('📝 Updating product ID:', editingProduk.id);
+
+        const result = await bengkelService.updateBengkelProduk(editingProduk.id, submitData);
+
+        if (result.success) {
+          console.log('✅ Product updated successfully');
+          alert(result.message || 'Produk berhasil diupdate!');
+
+          // Refresh data from database
+          await fetchData();
+        } else {
+          throw new Error(result.message || 'Gagal mengupdate produk');
+        }
       } else {
-        await authAPI.post('/tambahproduk', submitData);
+        // Create new product via API
+        console.log('➕ Creating new product');
+
+        const result = await bengkelService.createBengkelProduk(submitData);
+
+        if (result.success) {
+          console.log('✅ Product created successfully');
+          alert(result.message || 'Produk berhasil ditambahkan!');
+
+          // Refresh data from database
+          await fetchData();
+        } else {
+          throw new Error(result.message || 'Gagal menambahkan produk');
+        }
       }
-      
-      await fetchData();
+
       resetForm();
     } catch (error) {
       console.error('Error saving produk bengkel:', error);
-      alert('Gagal menyimpan data produk bengkel');
+      alert('Gagal menyimpan data produk bengkel: ' + error.message);
     }
   };
 
   const handleEdit = (produk) => {
+    console.log('Editing product:', produk);
     setEditingProduk(produk);
     setFormData({
+      bengkel_id: produk.bengkel_id?.toString() || '',
       nama_produk: produk.nama_produk || '',
-      pilihlayananId: produk.pilihlayananId?.toString() || '',
       harga: produk.harga?.toString() || '',
-      stok: produk.stok?.toString() || '',
-      deskripsi: produk.deskripsi || '',
-      kategori_produk: produk.kategori_produk || 'oli'
+      foto_produk: produk.foto_produk || '',
+      jenis_layanan: produk.jenis_layanan || 'semua_jenis_layanan',
+      deskripsi: produk.deskripsi || ''
     });
     setShowForm(true);
   };
@@ -126,23 +198,36 @@ const ProdukBengkelManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Yakin ingin menghapus produk ini?')) {
       try {
-        await authAPI.delete(`/produk/${id}`);
-        await fetchData();
+        console.log('🗑️ Deleting product ID:', id);
+
+        const result = await bengkelService.deleteBengkelProduk(id);
+
+        if (result.success) {
+          console.log('✅ Product deleted successfully');
+          alert(result.message || 'Produk berhasil dihapus!');
+
+          // Refresh data from database
+          await fetchData();
+        } else {
+          throw new Error(result.message || 'Gagal menghapus produk');
+        }
       } catch (error) {
-        console.error('Error deleting produk:', error);
-        alert('Gagal menghapus produk');
+        console.error('❌ Error deleting produk:', error);
+        alert('Gagal menghapus produk: ' + error.message);
       }
     }
   };
 
+
+
   const resetForm = () => {
     setFormData({
+      bengkel_id: '',
       nama_produk: '',
-      pilihlayananId: '',
       harga: '',
-      stok: '',
-      deskripsi: '',
-      kategori_produk: 'oli'
+      foto_produk: '',
+      jenis_layanan: 'semua_jenis_layanan',
+      deskripsi: ''
     });
     setEditingProduk(null);
     setShowForm(false);
@@ -164,32 +249,30 @@ const ProdukBengkelManagement = () => {
     }).format(amount);
   };
 
-  const getKategoriIcon = (kategori) => {
-    switch (kategori) {
-      case 'oli': return '🛢️';
-      case 'ban': return '⚫';
-      case 'spare_part': return '🔩';
-      case 'aki': return '🔋';
-      case 'filter': return '🔍';
-      default: return '⚙️';
+  const getJenisLayananIcon = (jenis) => {
+    switch (jenis) {
+      case 'semua_jenis_layanan': return '🔧';
+      case 'service_rutin': return '🔄';
+      case 'perbaikan_mesin': return '⚙️';
+      case 'ganti_ban': return '⚫';
+      case 'ganti_oli': return '🛢️';
+      case 'tune_up': return '🚀';
+      case 'service_berkala': return '📅';
+      default: return '🔧';
     }
   };
 
-  const getKategoriBadgeColor = (kategori) => {
-    switch (kategori) {
-      case 'oli': return 'bg-yellow-100 text-yellow-800';
-      case 'ban': return 'bg-gray-100 text-gray-800';
-      case 'spare_part': return 'bg-blue-100 text-blue-800';
-      case 'aki': return 'bg-green-100 text-green-800';
-      case 'filter': return 'bg-purple-100 text-purple-800';
+  const getJenisLayananBadgeColor = (jenis) => {
+    switch (jenis) {
+      case 'semua_jenis_layanan': return 'bg-gray-100 text-gray-800';
+      case 'service_rutin': return 'bg-blue-100 text-blue-800';
+      case 'perbaikan_mesin': return 'bg-red-100 text-red-800';
+      case 'ganti_ban': return 'bg-purple-100 text-purple-800';
+      case 'ganti_oli': return 'bg-yellow-100 text-yellow-800';
+      case 'tune_up': return 'bg-green-100 text-green-800';
+      case 'service_berkala': return 'bg-indigo-100 text-indigo-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getStokStatus = (stok) => {
-    if (stok <= 5) return { color: 'text-red-600', status: 'Stok Habis' };
-    if (stok <= 15) return { color: 'text-yellow-600', status: 'Stok Menipis' };
-    return { color: 'text-green-600', status: 'Stok Tersedia' };
   };
 
   if (loading) {
@@ -206,14 +289,41 @@ const ProdukBengkelManagement = () => {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-medium text-gray-900">Kelola Produk/Spare Part</h3>
-          <p className="text-sm text-gray-600">Oli, kampas rem, ban, aki, dan spare part lainnya</p>
+          <p className="text-sm text-gray-600">Daftar semua produk dari berbagai bengkel dalam bentuk list</p>
+          <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
+            <span>📊 Total: {produkBengkel.length} produk</span>
+            <span>🏪 Dari {new Set(produkBengkel.map(p => p.Bengkel?.nama_bengkel)).size} bengkel</span>
+          </div>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          Tambah Produk Baru
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              fetchData();
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            🔄 Refresh
+          </button>
+          <button
+            onClick={() => {
+              console.log('🐛 Debug info:');
+              console.log('Current produkBengkel:', produkBengkel);
+              console.log('Current bengkelList:', bengkelList);
+              console.log('Loading state:', loading);
+              alert(`Debug: ${produkBengkel.length} products loaded. Check console for details.`);
+            }}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            🐛 Debug
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Tambah Produk Baru
+          </button>
+        </div>
       </div>
 
       {/* Form Modal */}
@@ -235,6 +345,26 @@ const ProdukBengkelManagement = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bengkel
+                </label>
+                <select
+                  name="bengkel_id"
+                  value={formData.bengkel_id}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  required
+                >
+                  <option value="">Pilih Bengkel</option>
+                  {bengkelList.map((bengkel) => (
+                    <option key={bengkel.id} value={bengkel.id}>
+                      {bengkel.nama_bengkel} ({bengkel.jenis_kendaraan})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nama Produk
                 </label>
                 <input
@@ -250,73 +380,52 @@ const ProdukBengkelManagement = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kategori Produk
+                  Jenis Layanan
                 </label>
                 <select
-                  name="kategori_produk"
-                  value={formData.kategori_produk}
+                  name="jenis_layanan"
+                  value={formData.jenis_layanan}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                   required
                 >
-                  <option value="oli">🛢️ Oli</option>
-                  <option value="ban">⚫ Ban</option>
-                  <option value="spare_part">🔩 Spare Part</option>
-                  <option value="aki">🔋 Aki</option>
-                  <option value="filter">🔍 Filter</option>
+                  <option value="semua_jenis_layanan">🔧 Semua Jenis Layanan</option>
+                  <option value="service_rutin">🔄 Service Rutin</option>
+                  <option value="perbaikan_mesin">⚙️ Perbaikan Mesin</option>
+                  <option value="ganti_ban">⚫ Ganti Ban</option>
+                  <option value="ganti_oli">🛢️ Ganti Oli</option>
+                  <option value="tune_up">🚀 Tune Up</option>
+                  <option value="service_berkala">📅 Service Berkala</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Layanan Terkait
+                  Harga (Rp)
                 </label>
-                <select
-                  name="pilihlayananId"
-                  value={formData.pilihlayananId}
+                <input
+                  type="number"
+                  name="harga"
+                  value={formData.harga}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="45000"
                   required
-                >
-                  <option value="">Pilih Layanan</option>
-                  {layananBengkel.map((layanan) => (
-                    <option key={layanan.id} value={layanan.id}>
-                      {layanan.nama_pilih_layanan}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Harga (Rp)
-                  </label>
-                  <input
-                    type="number"
-                    name="harga"
-                    value={formData.harga}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="45000"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Stok
-                  </label>
-                  <input
-                    type="number"
-                    name="stok"
-                    value={formData.stok}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="50"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  URL Foto Produk (Opsional)
+                </label>
+                <input
+                  type="url"
+                  name="foto_produk"
+                  value={formData.foto_produk}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="https://example.com/foto-produk.jpg"
+                />
               </div>
 
               <div>
@@ -363,16 +472,16 @@ const ProdukBengkelManagement = () => {
                   Produk
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Kategori
+                  Bengkel
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Layanan
+                  Jenis Layanan
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Harga
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stok
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aksi
@@ -380,28 +489,45 @@ const ProdukBengkelManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {produkBengkel.map((produk) => {
-                const stokStatus = getStokStatus(produk.stok);
-                return (
+              {produkBengkel.length > 0 ? (
+                produkBengkel.map((produk) => (
                   <tr key={produk.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-2xl mr-3">{getKategoriIcon(produk.kategori_produk)}</span>
-                        <div>
+                        <div className="flex-shrink-0 h-10 w-10">
+                          {produk.foto_produk ? (
+                            <img
+                              className="h-10 w-10 rounded-lg object-cover"
+                              src={produk.foto_produk}
+                              alt={produk.nama_produk}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div className={`h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center ${produk.foto_produk ? 'hidden' : ''}`}>
+                            <span className="text-lg">⚙️</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{produk.nama_produk}</div>
                           <div className="text-sm text-gray-500">{produk.deskripsi}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getKategoriBadgeColor(produk.kategori_produk)}`}>
-                        {produk.kategori_produk?.replace('_', ' ').toUpperCase()}
-                      </span>
+                      <div className="text-sm text-gray-900">
+                        {produk.Bengkel?.nama_bengkel || 'Bengkel Tidak Diketahui'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {produk.Bengkel?.jenis_kendaraan || 'N/A'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {produk.layanan_nama || `Layanan ID: ${produk.pilihlayananId}`}
-                      </div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getJenisLayananBadgeColor(produk.jenis_layanan)}`}>
+                        {getJenisLayananIcon(produk.jenis_layanan)} {produk.jenis_layanan?.replace('_', ' ').toUpperCase()}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-green-600">
@@ -409,12 +535,11 @@ const ProdukBengkelManagement = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm font-medium ${stokStatus.color}`}>
-                        {produk.stok} pcs
-                      </div>
-                      <div className={`text-xs ${stokStatus.color}`}>
-                        {stokStatus.status}
-                      </div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        produk.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {produk.status === 'aktif' ? '✅ Aktif' : '❌ Nonaktif'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
@@ -431,24 +556,30 @@ const ProdukBengkelManagement = () => {
                       </button>
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="text-6xl mb-4">📦</div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Belum Ada Produk</h3>
+                      <p className="text-gray-500 mb-4">
+                        Belum ada produk bengkel yang tersimpan di database.
+                      </p>
+                      <button
+                        onClick={() => setShowForm(true)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Tambah Produk Pertama
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
-
-      {produkBengkel.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Belum ada produk bengkel yang terdaftar</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="mt-2 text-green-600 hover:text-green-800"
-          >
-            Tambah produk pertama
-          </button>
-        </div>
-      )}
     </div>
   );
 };
