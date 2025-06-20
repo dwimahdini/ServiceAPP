@@ -41,17 +41,23 @@ export const opoWaeService = {
         headers: createHeaders(false), // Tidak perlu auth untuk melihat daftar layanan
       });
       const result = await handleResponse(response);
-      
+      console.log('All pilih layanan from API:', result);
+
       // Handle response format sesuai dokumentasi
+      let allLayanan = [];
       if (result.data) {
-        // Filter hanya layanan Opo Wae (layananId = 3)
-        return result.data.filter(layanan => layanan.layananId === 3);
+        allLayanan = result.data;
+      } else if (Array.isArray(result)) {
+        allLayanan = result;
       }
-      
-      return result.filter ? result.filter(layanan => layanan.layananId === 3) : [];
+
+      // Filter hanya layanan Opo Wae (layananId = 3)
+      const opoWaeLayanan = allLayanan.filter(layanan => layanan.layananId === 3);
+      console.log('Filtered Opo Wae layanan:', opoWaeLayanan);
+      return opoWaeLayanan;
     } catch (error) {
       console.error('Error fetching opo wae layanan:', error);
-      throw error;
+      return []; // Return empty array instead of throwing error
     }
   },
 

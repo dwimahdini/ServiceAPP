@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authAPI } from '../../services/api';
+import ImageUpload from './ImageUpload';
 
 const BengkelProdukManagement = ({ bengkelId, bengkelNama, onClose }) => {
   const [produkList, setProdukList] = useState([]);
@@ -250,19 +251,16 @@ const BengkelProdukManagement = ({ bengkelId, bengkelNama, onClose }) => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      URL Foto Produk (Opsional)
-                    </label>
-                    <input
-                      type="url"
-                      name="foto_produk"
-                      value={formData.foto_produk}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="https://example.com/foto-produk.jpg"
-                    />
-                  </div>
+                  <ImageUpload
+                    label="Foto Produk"
+                    currentImage={formData.foto_produk}
+                    onImageUploaded={(imageUrl) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        foto_produk: imageUrl || ''
+                      }));
+                    }}
+                  />
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -6,9 +6,22 @@ const LayananOpoWaeManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingLayanan, setEditingLayanan] = useState(null);
+
+  // Daftar kategori yang tersedia
+  const kategoriOptions = [
+    { value: 'transport', label: 'Transportasi', icon: '🚗' },
+    { value: 'cleaning', label: 'Kebersihan', icon: '🧹' },
+    { value: 'childcare', label: 'Perawatan Anak', icon: '👶' },
+    { value: 'maintenance', label: 'Perbaikan', icon: '🔧' },
+    { value: 'massage', label: 'Kesehatan & Spa', icon: '💆' },
+    { value: 'cooking', label: 'Memasak', icon: '👨‍🍳' },
+    { value: 'gardening', label: 'Berkebun', icon: '🌱' },
+    { value: 'other', label: 'Layanan Lainnya', icon: '🏠' }
+  ];
   const [formData, setFormData] = useState({
     nama_pilihan: '',
-    harga: ''
+    harga: '',
+    kategori: 'other'
   });
 
   useEffect(() => {
@@ -42,6 +55,7 @@ const LayananOpoWaeManagement = () => {
       const submitData = {
         nama_pilihan: formData.nama_pilihan,
         harga: parseFloat(formData.harga),
+        kategori: formData.kategori,
         layananId: 3 // ID untuk layanan Opo Wae
       };
 
@@ -66,7 +80,8 @@ const LayananOpoWaeManagement = () => {
     setEditingLayanan(layanan);
     setFormData({
       nama_pilihan: layanan.nama_pilihan || '',
-      harga: layanan.harga?.toString() || ''
+      harga: layanan.harga?.toString() || '',
+      kategori: layanan.kategori || inferCategoryFromName(layanan.nama_pilihan || '')
     });
     setShowForm(true);
   };
@@ -86,7 +101,8 @@ const LayananOpoWaeManagement = () => {
   const resetForm = () => {
     setFormData({
       nama_pilihan: '',
-      harga: ''
+      harga: '',
+      kategori: 'other'
     });
     setEditingLayanan(null);
     setShowForm(false);
@@ -215,11 +231,21 @@ const LayananOpoWaeManagement = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kategori
+                  Kategori *
                 </label>
-                <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-600">
-                  Kategori akan otomatis ditentukan berdasarkan nama layanan
-                </div>
+                <select
+                  name="kategori"
+                  value={formData.kategori}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                >
+                  {kategoriOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.icon} {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -260,16 +286,19 @@ const LayananOpoWaeManagement = () => {
       {/* Daftar Layanan Opo Wae */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {layananOpoWae.map((layanan) => {
-          const inferredCategory = inferCategoryFromName(layanan.nama_pilihan);
+          // Gunakan kategori dari database atau fallback ke inferensi
+          const kategori = layanan.kategori || inferCategoryFromName(layanan.nama_pilihan);
+          const kategoriOption = kategoriOptions.find(opt => opt.value === kategori) || kategoriOptions.find(opt => opt.value === 'other');
+
           return (
             <div key={layanan.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{getKategoriIcon(inferredCategory)}</span>
+                  <span className="text-2xl">{kategoriOption.icon}</span>
                   <div>
                     <h4 className="font-medium text-gray-900">{layanan.nama_pilihan}</h4>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getKategoriBadgeColor(inferredCategory)}`}>
-                      {inferredCategory?.toUpperCase()}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getKategoriBadgeColor(kategori)}`}>
+                      {kategoriOption.label}
                     </span>
                   </div>
                 </div>

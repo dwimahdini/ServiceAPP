@@ -11,7 +11,6 @@ const BengkelManagement = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedBengkel, setSelectedBengkel] = useState(null);
   const [filterJenis, setFilterJenis] = useState('semua');
-  const [testingConnection, setTestingConnection] = useState(false);
   const [formData, setFormData] = useState({
     nama_bengkel: '',
     alamat: '',
@@ -21,9 +20,7 @@ const BengkelManagement = () => {
     jenis_kendaraan: 'motor',
     rating: 4.0,
     deskripsi: '',
-    layanan_tersedia: '',
-    koordinat_lat: '',
-    koordinat_lng: ''
+    layanan_tersedia: ''
   });
 
   useEffect(() => {
@@ -43,18 +40,7 @@ const BengkelManagement = () => {
     }
   };
 
-  const handleTestConnection = async () => {
-    try {
-      setTestingConnection(true);
-      const result = await bengkelService.testConnection();
-      alert(`Test koneksi berhasil!\n\nResponse: ${JSON.stringify(result, null, 2)}`);
-    } catch (error) {
-      console.error('Test connection failed:', error);
-      alert(`Test koneksi gagal!\n\nError: ${error.message}`);
-    } finally {
-      setTestingConnection(false);
-    }
-  };
+
 
   const fetchBengkelData = async () => {
     try {
@@ -87,8 +73,7 @@ const BengkelManagement = () => {
           status: 'aktif',
           deskripsi: 'Bengkel motor terpercaya dengan teknisi berpengalaman',
           layanan_tersedia: 'Service Rutin, Ganti Oli, Tune Up',
-          koordinat_lat: '-7.2575',
-          koordinat_lng: '112.7521'
+
         },
         {
           id: 2,
@@ -102,8 +87,7 @@ const BengkelManagement = () => {
           status: 'aktif',
           deskripsi: 'Layanan service mobil lengkap dan profesional',
           layanan_tersedia: 'Service Berkala, Tune Up, AC Service',
-          koordinat_lat: '-7.2575',
-          koordinat_lng: '112.7521'
+
         }
       ]);
 
@@ -157,9 +141,7 @@ const BengkelManagement = () => {
       jenis_kendaraan: bengkel.jenis_kendaraan || 'motor',
       rating: bengkel.rating || 4.0,
       deskripsi: bengkel.deskripsi || '',
-      layanan_tersedia: bengkel.layanan_tersedia || '',
-      koordinat_lat: bengkel.koordinat_lat || '',
-      koordinat_lng: bengkel.koordinat_lng || ''
+      layanan_tersedia: bengkel.layanan_tersedia || ''
     });
     setShowForm(true);
   };
@@ -188,9 +170,7 @@ const BengkelManagement = () => {
       jenis_kendaraan: 'motor',
       rating: 4.0,
       deskripsi: '',
-      layanan_tersedia: '',
-      koordinat_lat: '',
-      koordinat_lng: ''
+      layanan_tersedia: ''
     });
     setEditingBengkel(null);
     setShowForm(false);
@@ -243,13 +223,6 @@ const BengkelManagement = () => {
             <option value="motor">Motor</option>
             <option value="mobil">Mobil</option>
           </select>
-          <button
-            onClick={handleTestConnection}
-            disabled={testingConnection}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap disabled:opacity-50"
-          >
-            {testingConnection ? 'Testing...' : 'Test Koneksi'}
-          </button>
           <button
             onClick={() => setShowForm(true)}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
@@ -479,35 +452,7 @@ const BengkelManagement = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Koordinat Latitude
-                  </label>
-                  <input
-                    type="text"
-                    name="koordinat_lat"
-                    value={formData.koordinat_lat}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="-7.2500"
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Koordinat Longitude
-                  </label>
-                  <input
-                    type="text"
-                    name="koordinat_lng"
-                    value={formData.koordinat_lng}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="112.7500"
-                  />
-                </div>
-              </div>
 
               <div className="flex justify-end space-x-3 pt-4">
                 <button

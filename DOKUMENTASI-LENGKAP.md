@@ -88,6 +88,8 @@ future-x-system/
 - Spesialisasi
 - Pengalaman/Deskripsi
 - Tarif per Jam (Rp)
+- Alamat Praktik
+- Nomor Telepon
 - URL Foto (optional)
 - Jadwal Tersedia (checkbox)
 

@@ -12,9 +12,11 @@ const PsikologiPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState(null);
   const [bookingForm, setBookingForm] = useState({
     nama_lengkap: '',
-    layanan_konsultasi: '',
+    pilih_hari: '',
     pilih_jam: '',
     durasi_konsultasi: '',
     pilih_dokter_psikolog: ''
@@ -61,19 +63,79 @@ const PsikologiPage = () => {
     }));
   };
 
-  const handleBookingSubmit = async (e) => {
+  // Get available days for selected doctor
+  const getAvailableDays = () => {
+    if (!bookingForm.pilih_dokter_psikolog) return [];
+
+    const selectedDokter = dokterList.find(dokter =>
+      dokter.id.toString() === bookingForm.pilih_dokter_psikolog
+    );
+
+    return selectedDokter?.jadwal_tersedia || [];
+  };
+
+  // Get doctors with combined name and specialization
+  const getDokterWithSpecialization = () => {
+    return dokterList.map(dokter => ({
+      ...dokter,
+      displayName: `${dokter.pilih_dokter_psikolog || dokter.nama_dokter} - ${dokter.spesialisasi || 'Spesialisasi Umum'}`
+    }));
+  };
+
+  // Calculate booking details and total payment
+  const calculateBookingDetails = () => {
+    if (!bookingForm.pilih_dokter_psikolog || !bookingForm.durasi_konsultasi) {
+      return null;
+    }
+
+    const selectedDokter = dokterList.find(dokter =>
+      dokter.id.toString() === bookingForm.pilih_dokter_psikolog
+    );
+
+    if (!selectedDokter) return null;
+
+    const durasi = parseInt(bookingForm.durasi_konsultasi);
+    const tarifPerJam = parseFloat(selectedDokter.tarif_per_jam) || 0;
+    const subtotal = tarifPerJam * durasi;
+    const adminFee = 10000; // Biaya admin tetap
+    const total = subtotal + adminFee;
+
+    return {
+      dokter: selectedDokter,
+      durasi: durasi,
+      tarifPerJam: tarifPerJam,
+      subtotal: subtotal,
+      adminFee: adminFee,
+      total: total
+    };
+  };
+
+  const handleBookingSubmit = (e) => {
     e.preventDefault();
 
+    // Check if user is logged in
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!user.id) {
+      alert('Silakan login terlebih dahulu untuk melakukan booking.');
+      return;
+    }
+
+    // Calculate booking details
+    const details = calculateBookingDetails();
+    if (!details) {
+      alert('Mohon lengkapi semua data booking.');
+      return;
+    }
+
+    // Set booking details and show modal
+    setBookingDetails(details);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmBooking = async () => {
     try {
       setSubmitting(true);
       setError(null);
-
-      // Check if user is logged in
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!user.id) {
-        alert('Silakan login terlebih dahulu untuk melakukan booking.');
-        return;
-      }
 
       // Format booking data menggunakan booking service
       const bookingData = bookingService.formatPsikologiBooking(bookingForm);
@@ -85,14 +147,16 @@ const PsikologiPage = () => {
       console.log('Booking result:', result);
       alert('Booking berhasil! Kami akan menghubungi Anda segera.');
 
-      // Reset form
+      // Reset form and close modal
       setBookingForm({
         nama_lengkap: '',
-        layanan_konsultasi: '',
+        pilih_hari: '',
         pilih_jam: '',
         durasi_konsultasi: '',
         pilih_dokter_psikolog: ''
       });
+      setShowConfirmModal(false);
+      setBookingDetails(null);
 
     } catch (error) {
       console.error('Error submitting booking:', error);
@@ -165,40 +229,23 @@ const PsikologiPage = () => {
 
                 <div>
                   <select
-                    name="layanan_konsultasi"
-                    value={bookingForm.layanan_konsultasi}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Layanan Konsultasi</option>
-                    {layananList.map((layanan) => (
-                      <option key={layanan.id} value={layanan.id}>
-                        {layanan.nama_layanan || layanan.layanan}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <select
                     name="pilih_dokter_psikolog"
                     value={bookingForm.pilih_dokter_psikolog}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
-                    <option value="">Pilih Dokter/Psikolog</option>
-                    {dokterList.map((dokter) => (
+                    <option value="">Pilih Dokter & Spesialisasi</option>
+                    {getDokterWithSpecialization().map((dokter) => (
                       <option key={dokter.id} value={dokter.id}>
-                        {dokter.pilih_dokter_psikolog || dokter.nama_dokter}
+                        {dokter.displayName}
                       </option>
                     ))}
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 gap-6 mb-6">
                 <div>
                   <select
                     name="durasi_konsultasi"
@@ -208,16 +255,36 @@ const PsikologiPage = () => {
                     required
                   >
                     <option value="">Durasi Konsultasi</option>
-                    {durasiList.map((durasi) => (
-                      <option key={durasi.id} value={durasi.id}>
-                        {durasi.label || `${durasi.durasi} Menit`}
-                      </option>
-                    ))}
+                    <option value="1">1 Jam</option>
+                    <option value="3">3 Jam</option>
+                    <option value="5">5 Jam (Maksimal)</option>
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <select
+                    name="pilih_hari"
+                    value={bookingForm.pilih_hari}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Pilih Hari Konsultasi</option>
+                    {getAvailableDays().map((hari) => (
+                      <option key={hari} value={hari}>
+                        {hari}
+                      </option>
+                    ))}
+                  </select>
+                  {bookingForm.pilih_dokter_psikolog && getAvailableDays().length === 0 && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Dokter belum mengatur jadwal tersedia
+                    </p>
+                  )}
+                </div>
+
                 <div>
                   <input
                     type="time"
@@ -235,13 +302,9 @@ const PsikologiPage = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`px-12 py-3 rounded-lg font-semibold transition-colors ${
-                    submitting
-                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
+                  className="px-12 py-3 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                 >
-                  {submitting ? 'Memproses...' : 'Booking'}
+                  Lihat Rincian & Booking
                 </button>
               </div>
             </form>
@@ -302,6 +365,19 @@ const PsikologiPage = () => {
                         </div>
                       )}
 
+                      {dokter.jadwal_tersedia && dokter.jadwal_tersedia.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-500 mb-1">Jadwal Tersedia:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {dokter.jadwal_tersedia.map((hari) => (
+                              <span key={hari} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                {hari}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-2 mb-4">
                         <div className="flex items-center">
                           {[...Array(5)].map((_, i) => (
@@ -331,6 +407,99 @@ const PsikologiPage = () => {
             )}
           </div>
         </div>
+
+        {/* Modal Konfirmasi Booking */}
+        {showConfirmModal && bookingDetails && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Konfirmasi Booking</h3>
+                  <button
+                    onClick={() => setShowConfirmModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Detail Pasien */}
+                  <div className="border-b pb-3">
+                    <h4 className="font-semibold text-gray-700 mb-2">Detail Pasien</h4>
+                    <p className="text-gray-600">Nama: {bookingForm.nama_lengkap}</p>
+                  </div>
+
+                  {/* Detail Dokter */}
+                  <div className="border-b pb-3">
+                    <h4 className="font-semibold text-gray-700 mb-2">Detail Dokter</h4>
+                    <p className="text-gray-600">Nama: {bookingDetails.dokter.pilih_dokter_psikolog}</p>
+                    <p className="text-gray-600">Spesialisasi: {bookingDetails.dokter.spesialisasi}</p>
+                    <p className="text-gray-600">Tarif: Rp {bookingDetails.tarifPerJam.toLocaleString('id-ID')}/jam</p>
+                  </div>
+
+                  {/* Detail Konsultasi */}
+                  <div className="border-b pb-3">
+                    <h4 className="font-semibold text-gray-700 mb-2">Detail Konsultasi</h4>
+                    <p className="text-gray-600">Hari: {bookingForm.pilih_hari}</p>
+                    <p className="text-gray-600">Jam: {bookingForm.pilih_jam}</p>
+                    <p className="text-gray-600">Durasi: {bookingDetails.durasi} jam</p>
+                  </div>
+
+                  {/* Rincian Pembayaran */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-700 mb-3">Rincian Pembayaran</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Konsultasi ({bookingDetails.durasi} jam)</span>
+                        <span className="text-gray-600">Rp {bookingDetails.subtotal.toLocaleString('id-ID')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Biaya Admin</span>
+                        <span className="text-gray-600">Rp {bookingDetails.adminFee.toLocaleString('id-ID')}</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between font-bold">
+                        <span className="text-gray-900">Total Pembayaran</span>
+                        <span className="text-green-600">Rp {bookingDetails.total.toLocaleString('id-ID')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Catatan */}
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Catatan:</strong> Pembayaran dapat dilakukan setelah konfirmasi booking.
+                      Tim kami akan menghubungi Anda untuk konfirmasi jadwal dan metode pembayaran.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowConfirmModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleConfirmBooking}
+                    disabled={submitting}
+                    className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
+                      submitting
+                        ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {submitting ? 'Memproses...' : 'Konfirmasi Booking'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
 

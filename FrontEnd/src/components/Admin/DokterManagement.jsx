@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authAPI } from '../../services/api';
+import ImageUpload from './ImageUpload';
 
 const DokterManagement = () => {
   const [dokters, setDokters] = useState([]);
@@ -13,6 +14,8 @@ const DokterManagement = () => {
     deskripsi: '',
     harga_konsultasi: '',
     foto_url: '',
+    alamat: '',
+    telepon: '',
     jadwal_tersedia: []
   });
 
@@ -60,6 +63,8 @@ const DokterManagement = () => {
           deskripsi: 'Spesialis dalam menangani kecemasan dan depresi',
           harga_konsultasi: 150000,
           foto_url: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300',
+          alamat: 'Jl. Sudirman No. 123, Jakarta',
+          telepon: '021-1234567',
           jadwal_tersedia: ['Senin', 'Rabu', 'Jumat']
         },
         {
@@ -69,6 +74,8 @@ const DokterManagement = () => {
           deskripsi: 'Ahli dalam psikologi perkembangan anak dan remaja',
           harga_konsultasi: 175000,
           foto_url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300',
+          alamat: 'Jl. Thamrin No. 456, Jakarta',
+          telepon: '021-7654321',
           jadwal_tersedia: ['Selasa', 'Kamis', 'Sabtu']
         }
       ]);
@@ -89,9 +96,14 @@ const DokterManagement = () => {
           pilih_dokter_psikolog: formData.pilih_dokter_psikolog,
           spesialisasi: formData.spesialisasi,
           pengalaman: formData.deskripsi, // Map deskripsi ke pengalaman
-          tarif_per_jam: parseFloat(formData.harga_konsultasi) || 0
+          tarif_per_jam: parseFloat(formData.harga_konsultasi) || 0,
+          foto: formData.foto_url || formData.foto || '', // Use uploaded image URL
+          alamat: formData.alamat,
+          telepon: formData.telepon,
+          jadwal_tersedia: formData.jadwal_tersedia
         };
 
+        console.log('Sending update data:', updateData);
         await authAPI.put(`/simple/dokter/${editingDokter.id}`, updateData);
       } else {
         // Tambah dokter baru - menggunakan endpoint simple yang baru
@@ -100,9 +112,15 @@ const DokterManagement = () => {
           layananId: 1, // ID untuk layanan Psikologi
           spesialisasi: formData.spesialisasi,
           pengalaman: formData.deskripsi, // Map deskripsi ke pengalaman
-          tarif_per_jam: parseFloat(formData.harga_konsultasi) || 0
+          tarif_per_jam: parseFloat(formData.harga_konsultasi) || 0,
+          foto: formData.foto_url || formData.foto || '', // Use uploaded image URL
+          alamat: formData.alamat,
+          telepon: formData.telepon,
+          jadwal_tersedia: formData.jadwal_tersedia
         };
 
+        console.log('Sending create data:', submitData);
+        console.log('Current formData:', formData);
         await authAPI.post('/simple/dokter', submitData);
       }
 
@@ -132,6 +150,8 @@ const DokterManagement = () => {
       deskripsi: dokter.pengalaman || dokter.deskripsi || '', // Map pengalaman ke deskripsi
       harga_konsultasi: dokter.tarif_per_jam || dokter.harga_konsultasi || '', // Map tarif_per_jam ke harga_konsultasi
       foto_url: dokter.foto || dokter.foto_url || '',
+      alamat: dokter.alamat || '',
+      telepon: dokter.telepon || '',
       jadwal_tersedia: dokter.jadwal_tersedia || []
     });
     setShowForm(true);
@@ -165,6 +185,8 @@ const DokterManagement = () => {
       deskripsi: '',
       harga_konsultasi: '',
       foto_url: '',
+      alamat: '',
+      telepon: '',
       jadwal_tersedia: []
     });
     setEditingDokter(null);
@@ -187,6 +209,8 @@ const DokterManagement = () => {
         : [...prev.jadwal_tersedia, hari]
     }));
   };
+
+
 
   if (loading) {
     return (
@@ -304,20 +328,48 @@ const DokterManagement = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL Foto (Opsional)
+                  Alamat Praktik
+                </label>
+                <textarea
+                  name="alamat"
+                  value={formData.alamat}
+                  onChange={handleInputChange}
+                  rows={2}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Contoh: Jl. Sudirman No. 123, Jakarta"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nomor Telepon
                 </label>
                 <input
-                  type="url"
-                  name="foto_url"
-                  value={formData.foto_url}
+                  type="tel"
+                  name="telepon"
+                  value={formData.telepon}
                   onChange={handleInputChange}
-                  placeholder="https://example.com/photo.jpg (kosongkan untuk foto default)"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Contoh: 021-1234567 atau 081234567890"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Kosongkan untuk menggunakan foto default. Gunakan URL gambar dari Pexels atau Unsplash.
-                </p>
               </div>
+
+              <ImageUpload
+                label="Foto Dokter"
+                currentImage={formData.foto_url}
+                onImageUploaded={(imageUrl) => {
+                  console.log('ImageUpload callback received:', imageUrl);
+                  setFormData(prev => {
+                    const newFormData = {
+                      ...prev,
+                      foto_url: imageUrl || '',
+                      foto: imageUrl || '' // Also update foto field for database consistency
+                    };
+                    console.log('Updated formData:', newFormData);
+                    return newFormData;
+                  });
+                }}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

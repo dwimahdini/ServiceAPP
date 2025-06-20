@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authAPI } from '../../services/api';
 import { bengkelService } from '../../services/bengkelService';
+import ImageUpload from './ImageUpload';
 
 const ProdukBengkelManagement = () => {
   const [produkBengkel, setProdukBengkel] = useState([]);
@@ -297,27 +298,6 @@ const ProdukBengkelManagement = () => {
         </div>
         <div className="flex space-x-3">
           <button
-            onClick={() => {
-              console.log('🔄 Manual refresh triggered');
-              fetchData();
-            }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            🔄 Refresh
-          </button>
-          <button
-            onClick={() => {
-              console.log('🐛 Debug info:');
-              console.log('Current produkBengkel:', produkBengkel);
-              console.log('Current bengkelList:', bengkelList);
-              console.log('Loading state:', loading);
-              alert(`Debug: ${produkBengkel.length} products loaded. Check console for details.`);
-            }}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            🐛 Debug
-          </button>
-          <button
             onClick={() => setShowForm(true)}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
@@ -414,19 +394,16 @@ const ProdukBengkelManagement = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL Foto Produk (Opsional)
-                </label>
-                <input
-                  type="url"
-                  name="foto_produk"
-                  value={formData.foto_produk}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="https://example.com/foto-produk.jpg"
-                />
-              </div>
+              <ImageUpload
+                label="Foto Produk"
+                currentImage={formData.foto_produk}
+                onImageUploaded={(imageUrl) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    foto_produk: imageUrl || ''
+                  }));
+                }}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

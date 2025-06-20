@@ -116,9 +116,7 @@ export const bengkelService = {
         jenis_kendaraan: bengkelData.jenis_kendaraan,
         rating: parseFloat(bengkelData.rating) || 4.0,
         deskripsi: bengkelData.deskripsi || '',
-        layanan_tersedia: bengkelData.layanan_tersedia || '',
-        koordinat_lat: bengkelData.koordinat_lat || null,
-        koordinat_lng: bengkelData.koordinat_lng || null
+        layanan_tersedia: bengkelData.layanan_tersedia || ''
       };
 
       const response = await authAPI.post('/bengkel', cleanData);
@@ -160,8 +158,6 @@ export const bengkelService = {
       if (bengkelData.rating !== undefined) cleanData.rating = parseFloat(bengkelData.rating);
       if (bengkelData.deskripsi !== undefined) cleanData.deskripsi = bengkelData.deskripsi;
       if (bengkelData.layanan_tersedia !== undefined) cleanData.layanan_tersedia = bengkelData.layanan_tersedia;
-      if (bengkelData.koordinat_lat !== undefined) cleanData.koordinat_lat = bengkelData.koordinat_lat || null;
-      if (bengkelData.koordinat_lng !== undefined) cleanData.koordinat_lng = bengkelData.koordinat_lng || null;
       if (bengkelData.status) cleanData.status = bengkelData.status;
 
       const response = await authAPI.put(`/bengkel/${id}`, cleanData);
@@ -198,20 +194,7 @@ export const bengkelService = {
     }
   },
 
-  /**
-   * Test koneksi endpoint bengkel
-   * @returns {Promise} Response test
-   */
-  async testConnection() {
-    try {
-      const response = await authAPI.get('/bengkel/test');
-      console.log('Test bengkel connection:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error testing bengkel connection:', error);
-      throw error;
-    }
-  },
+
 
   // ===== PRODUK BENGKEL FUNCTIONS =====
 

@@ -43,8 +43,14 @@ const BengkelPage = () => {
     }
   };
 
-  // Generate categories from actual product data
+  // Generate categories from actual product data with proper formatting
   const categories = ['Semua', ...new Set(produkList.map(produk => produk.jenis_layanan).filter(Boolean))];
+
+  // Format category names for display
+  const formatCategoryName = (category) => {
+    if (category === 'Semua') return category;
+    return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
 
   const filteredProduk = selectedCategory === 'Semua'
     ? produkList
@@ -69,7 +75,10 @@ const BengkelPage = () => {
               <p className="text-xl mb-8 text-gray-200">
                 Kami menyediakan layanan perbaikan dan perawatan kendaraan terbaik dengan teknisi berpengalaman dan peralatan modern.
               </p>
-              <button className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+              <button
+                onClick={() => window.scrollTo({ top: document.querySelector('.bg-white.rounded-lg.shadow-lg.p-8').offsetTop, behavior: 'smooth' })}
+                className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
                 LIHAT SELENGKAPNYA
               </button>
             </div>
@@ -141,7 +150,16 @@ const BengkelPage = () => {
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-bold">Semua Produk</h2>
-              <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+              <button
+                onClick={() => {
+                  // Scroll to show all products
+                  const productsGrid = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-3');
+                  if (productsGrid) {
+                    productsGrid.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+              >
                 Lihat Selengkapnya
               </button>
             </div>
@@ -161,17 +179,23 @@ const BengkelPage = () => {
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
-                      {category}
+                      {formatCategoryName(category)}
                     </button>
                   ))}
                 </div>
 
                 <h3 className="text-lg font-semibold mb-4 mt-8">Layanan</h3>
                 <div className="space-y-2">
-                  <button className="block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                  <button
+                    onClick={() => navigate('/layanan-motor')}
+                    className="block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
                     Motor
                   </button>
-                  <button className="block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                  <button
+                    onClick={() => navigate('/layanan-mobil')}
+                    className="block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
                     Mobil
                   </button>
                 </div>

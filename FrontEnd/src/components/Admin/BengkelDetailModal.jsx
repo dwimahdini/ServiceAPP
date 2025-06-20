@@ -274,27 +274,6 @@ const BengkelDetailModal = ({ bengkelId, bengkelNama, onClose }) => {
               Tambah Produk
             </button>
             <button
-              onClick={() => {
-                console.log('🔄 Manual refresh triggered');
-                fetchProdukBengkel();
-              }}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
-            >
-              🔄 Refresh
-            </button>
-            <button
-              onClick={() => {
-                console.log('🐛 Debug info:');
-                console.log('Current produkList:', produkList);
-                console.log('Loading state:', loading);
-                console.log('Bengkel ID:', bengkelId);
-                alert(`Debug: ${produkList.length} products loaded. Check console for details.`);
-              }}
-              className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm"
-            >
-              🐛 Debug
-            </button>
-            <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
             >

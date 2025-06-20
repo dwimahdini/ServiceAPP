@@ -129,6 +129,7 @@ CREATE TABLE `dokterpsikologs` (
   `foto` varchar(255) DEFAULT NULL,
   `alamat` text DEFAULT NULL,
   `telepon` varchar(20) DEFAULT NULL,
+  `jadwal_tersedia` text DEFAULT NULL,
   `layananId` int(11) NOT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
   `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -138,14 +139,17 @@ CREATE TABLE `dokterpsikologs` (
 -- Dumping data untuk tabel `dokterpsikologs`
 --
 
-INSERT INTO `dokterpsikologs` (`id`, `pilih_dokter_psikolog`, `spesialisasi`, `pengalaman`, `tarif_per_jam`, `foto`, `alamat`, `telepon`, `layananId`, `createdAt`, `updatedAt`) VALUES
-(4, 'Bengkel Jaya Motor', 'Service Motor', 'Bengkel motor terpercaya sejak 2010', 150000.00, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
-(5, 'Auto Care Center', 'Service Mobil', 'Spesialis service mobil dan tune up', 300000.00, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
-(6, 'Bengkel Mitra Sejati', 'Service Umum', 'Melayani service motor dan mobil', 200000.00, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
-(7, 'Driver Profesional', 'Jasa Driver', 'Driver berpengalaman untuk perjalanan dalam dan luar kota', 100000.00, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
-(8, 'Cleaning Service Pro', 'Jasa Bersih-bersih', 'Layanan pembersihan rumah dan kantor', 80000.00, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
-(9, 'Tukang Pijat Tradisional', 'Jasa Pijat', 'Pijat tradisional untuk kesehatan dan relaksasi', 120000.00, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
-(14, 'Dwi Mahdini', 'Psikolog Cinta', 'Dokter Psikologi Cinta Ternama', 400000.00, NULL, NULL, NULL, 1, '2025-06-16 21:03:26', '2025-06-16 21:03:26');
+INSERT INTO `dokterpsikologs` (`id`, `pilih_dokter_psikolog`, `spesialisasi`, `pengalaman`, `tarif_per_jam`, `foto`, `alamat`, `telepon`, `jadwal_tersedia`, `layananId`, `createdAt`, `updatedAt`) VALUES
+(4, 'Bengkel Jaya Motor', 'Service Motor', 'Bengkel motor terpercaya sejak 2010', 150000.00, NULL, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(5, 'Auto Care Center', 'Service Mobil', 'Spesialis service mobil dan tune up', 300000.00, NULL, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(6, 'Bengkel Mitra Sejati', 'Service Umum', 'Melayani service motor dan mobil', 200000.00, NULL, NULL, NULL, NULL, 2, '2025-06-16 19:47:07', '2025-06-16 19:47:07'),
+(7, 'Driver Profesional', 'Jasa Driver', 'Driver berpengalaman untuk perjalanan dalam dan luar kota', 100000.00, NULL, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(8, 'Cleaning Service Pro', 'Jasa Bersih-bersih', 'Layanan pembersihan rumah dan kantor', 80000.00, NULL, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(9, 'Tukang Pijat Tradisional', 'Jasa Pijat', 'Pijat tradisional untuk kesehatan dan relaksasi', 120000.00, NULL, NULL, NULL, NULL, 3, '2025-06-16 19:47:08', '2025-06-16 19:47:08'),
+(14, 'Dwi Mahdini', 'Psikolog Cinta', 'Dokter Psikologi Cinta Ternama', 400000.00, NULL, NULL, NULL, '["Senin", "Rabu", "Jumat"]', 1, '2025-06-16 21:03:26', '2025-06-16 21:03:26'),
+(15, 'Dr. Sarah Wijaya', 'Psikolog Klinis', 'Spesialis gangguan kecemasan dan depresi dengan pengalaman 8 tahun', 350000.00, NULL, 'Jl. Sudirman No. 123, Jakarta', '081234567890', '["Senin", "Selasa", "Kamis"]', 1, '2025-06-20 10:00:00', '2025-06-20 10:00:00'),
+(16, 'Dr. Ahmad Rizki', 'Psikolog Anak', 'Ahli dalam menangani masalah psikologi anak dan remaja', 300000.00, NULL, 'Jl. Gatot Subroto No. 456, Jakarta', '081234567891', '["Rabu", "Kamis", "Sabtu"]', 1, '2025-06-20 10:00:00', '2025-06-20 10:00:00'),
+(17, 'Dr. Maya Sari', 'Psikolog Keluarga', 'Konselor pernikahan dan terapi keluarga berpengalaman 10 tahun', 450000.00, NULL, 'Jl. Thamrin No. 789, Jakarta', '081234567892', '["Selasa", "Jumat", "Sabtu"]', 1, '2025-06-20 10:00:00', '2025-06-20 10:00:00');
 
 -- --------------------------------------------------------
 
@@ -425,7 +429,7 @@ ALTER TABLE `bookings`
 -- AUTO_INCREMENT untuk tabel `dokterpsikologs`
 --
 ALTER TABLE `dokterpsikologs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT untuk tabel `durasis`

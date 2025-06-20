@@ -41,11 +41,14 @@ export const psikologiService = {
         headers: createHeaders(false), // Tidak perlu auth untuk melihat daftar dokter
       });
       const allDokters = await handleResponse(response);
+      console.log('All dokters from API:', allDokters);
       // Filter hanya dokter psikologi (layananId = 1)
-      return allDokters.filter(dokter => dokter.layananId === 1);
+      const psikologDokters = allDokters.filter(dokter => dokter.layananId === 1);
+      console.log('Filtered psikolog dokters:', psikologDokters);
+      return psikologDokters;
     } catch (error) {
       console.error('Error fetching dokter psikolog:', error);
-      throw error;
+      return []; // Return empty array instead of throwing error
     }
   },
 
@@ -71,10 +74,15 @@ export const psikologiService = {
         method: 'GET',
         headers: createHeaders(false),
       });
-      return await handleResponse(response);
+      const allDurasi = await handleResponse(response);
+      console.log('All durasi from API:', allDurasi);
+      // Filter hanya durasi untuk psikologi (layananId = 1)
+      const psikologDurasi = allDurasi.filter(durasi => durasi.layananId === 1);
+      console.log('Filtered psikolog durasi:', psikologDurasi);
+      return psikologDurasi;
     } catch (error) {
       console.error('Error fetching durasi:', error);
-      throw error;
+      return []; // Return empty array instead of throwing error
     }
   },
 
@@ -85,10 +93,15 @@ export const psikologiService = {
         method: 'GET',
         headers: createHeaders(false),
       });
-      return await handleResponse(response);
+      const allLayanan = await handleResponse(response);
+      console.log('All layanan from API:', allLayanan);
+      // Filter hanya layanan psikologi (id = 1)
+      const psikologLayanan = allLayanan.filter(layanan => layanan.id === 1);
+      console.log('Filtered psikolog layanan:', psikologLayanan);
+      return psikologLayanan;
     } catch (error) {
       console.error('Error fetching layanan:', error);
-      throw error;
+      return []; // Return empty array instead of throwing error
     }
   },
 

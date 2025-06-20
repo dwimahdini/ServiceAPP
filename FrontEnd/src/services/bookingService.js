@@ -126,9 +126,10 @@ export const bookingService = {
     return {
       layananId: 1, // Psikologi
       dokterpsikologId: parseInt(formData.pilih_dokter_psikolog),
-      durasiId: parseInt(formData.durasi_konsultasi) || null,
+      durasi_jam: parseInt(formData.durasi_konsultasi) || 1, // Durasi dalam jam
       jam_booking: formData.pilih_jam,
-      notes: `Konsultasi dengan ${formData.nama_lengkap || 'Pasien'}`
+      hari_booking: formData.pilih_hari,
+      notes: `Konsultasi dengan ${formData.nama_lengkap || 'Pasien'} - ${formData.durasi_konsultasi} jam`
     };
   },
 
@@ -175,6 +176,9 @@ export const bookingService = {
         }
         if (!bookingData.jam_booking) {
           throw new Error('Jam booking harus diisi');
+        }
+        if (!bookingData.hari_booking) {
+          throw new Error('Hari konsultasi harus dipilih');
         }
         break;
       case 2: // Bengkel

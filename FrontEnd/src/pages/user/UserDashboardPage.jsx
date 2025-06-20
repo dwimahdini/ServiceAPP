@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
 import UserProfile from '../../components/User/UserProfile';
 import BookingHistory from '../../components/User/BookingHistory';
@@ -157,6 +158,7 @@ const UserDashboardPage = () => {
 
 // Services Overview Component
 const ServicesOverview = () => {
+  const navigate = useNavigate();
   const services = [
     {
       id: 1,
@@ -206,7 +208,7 @@ const ServicesOverview = () => {
             <p className="text-gray-600 text-sm mb-4">{service.description}</p>
             
             <button
-              onClick={() => window.location.href = service.link}
+              onClick={() => navigate(service.link)}
               className={`w-full ${service.color} text-white py-2 px-4 rounded-lg hover:opacity-90 transition-opacity`}
             >
               Lihat Layanan

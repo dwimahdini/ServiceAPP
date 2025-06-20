@@ -21,7 +21,7 @@ import CreateTransaction from './pages/admin/CreateTransaction';
 import RevenueAnalytics from './pages/admin/RevenueAnalytics';
 import ServiceManagement from './pages/admin/ServiceManagement';
 import DatabaseManagementPage from './pages/admin/DatabaseManagementPage';
-import SystemAdministrationPage from './pages/admin/SystemAdministrationPage';
+
 import UserDashboardPage from './pages/user/UserDashboardPage';
 import AdminLoginTest from './components/Debug/AdminLoginTest';
 import Contact from './pages/Contact';
@@ -158,14 +158,7 @@ function App() {
               }
             />
 
-            <Route
-              path="/admin/system"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <SystemAdministrationPage />
-                </ProtectedRoute>
-              }
-            />
+
 
             {/* User Dashboard */}
             <Route

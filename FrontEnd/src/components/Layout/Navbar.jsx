@@ -21,23 +21,46 @@ const Navbar = () => {
   };
 
   const handleLayananClick = () => {
-    if (location.pathname !== '/user/dashboard') {
-      navigate('/user/dashboard');
-      setTimeout(() => {
+    if (isAdmin()) {
+      // Admin: navigate to admin services page
+      navigate('/admin/services');
+    } else {
+      // User: scroll to layanan section or navigate to user dashboard
+      if (location.pathname !== '/user/dashboard') {
+        navigate('/user/dashboard');
+        setTimeout(() => {
+          const layanan = document.getElementById('layanan-kami');
+          if (layanan) layanan.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+      } else {
         const layanan = document.getElementById('layanan-kami');
         if (layanan) layanan.scrollIntoView({ behavior: 'smooth' });
-      }, 500);
-    } else {
-      const layanan = document.getElementById('layanan-kami');
-      if (layanan) layanan.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
-  const navigationItems = [
-    { name: 'Home', href: '/' },
-    { name: 'Layanan', onClick: handleLayananClick },
-    { name: 'Contact', onClick: handleContactClick },
-  ];
+  const handleHomeClick = () => {
+    if (isAdmin()) {
+      // Admin: navigate to admin dashboard
+      navigate('/admin/dashboard');
+    } else {
+      // User: navigate to user dashboard
+      navigate('/user/dashboard');
+    }
+  };
+
+  // Different navigation items based on user role
+  const navigationItems = isAdmin()
+    ? [
+        { name: 'Home', onClick: handleHomeClick },
+        { name: 'Layanan', onClick: handleLayananClick },
+        // Contact removed for admin
+      ]
+    : [
+        { name: 'Home', onClick: handleHomeClick },
+        { name: 'Layanan', onClick: handleLayananClick },
+        { name: 'Contact', onClick: handleContactClick },
+      ];
 
   return (
     <nav className="bg-white shadow-lg fixed w-full top-0 z-50">
@@ -94,7 +117,7 @@ const Navbar = () => {
                 </button>
               ) : (
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/user/dashboard')}
                   className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
                 >
                   Dashboard
@@ -178,7 +201,7 @@ const Navbar = () => {
                 ) : (
                   <button
                     onClick={() => {
-                      navigate('/dashboard');
+                      navigate('/user/dashboard');
                       setIsMenuOpen(false);
                     }}
                     className="w-full text-left px-3 py-2 text-base font-medium text-green-600 hover:text-green-800"
