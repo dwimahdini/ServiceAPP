@@ -27,60 +27,68 @@ const DokterManagement = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔍 Starting fetchDokters...');
 
       // Check authentication first
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
 
       if (!token) {
+        console.warn('⚠️ No token found');
         throw new Error('Please login as admin first');
       }
 
       if (user.role !== 'admin') {
+        console.warn('⚠️ User is not admin:', user.role);
         throw new Error('Admin access required');
       }
 
-      // Menggunakan endpoint simple yang baru
-      const response = await authAPI.get('/simple/dokter');
+      console.log('✅ Authentication check passed');
 
-      // Ensure response.data is an array
-      const responseData = Array.isArray(response.data) ? response.data : [];
+      // Now try to fetch dokters
+      console.log('📡 Fetching dokters from API...');
+      const response = await fetch('http://localhost:3001/simple/dokter', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API response not ok:', response.status, errorText);
+        throw new Error(`API Error ${response.status}: ${errorText}`);
+      }
+
+      const responseData = await response.json();
+      console.log('📊 Raw API response:', responseData);
+
+      // Ensure response is an array
+      const doktersArray = Array.isArray(responseData) ? responseData : [];
+      console.log('📋 Dokters array:', doktersArray);
 
       // Filter untuk dokter psikologi (layananId = 1)
-      const psikologDokters = responseData.filter(item => item.layananId === 1);
+      const psikologDokters = doktersArray.filter(item => {
+        const isValid = item && typeof item === 'object' && item.layananId === 1;
+        if (!isValid) {
+          console.log('⚠️ Filtering out invalid item:', item);
+        }
+        return isValid;
+      });
+
+      console.log(`✅ Found ${psikologDokters.length} psychology dokters:`, psikologDokters);
       setDokters(psikologDokters);
 
     } catch (error) {
-      console.error('Error fetching dokters:', error);
-      setError(error.message);
+      console.error('❌ Error in fetchDokters:', error);
+      setError(error.message || 'Unknown error occurred');
 
-      // Fallback dengan data mock jika API gagal
-      setDokters([
-        {
-          id: 1,
-          pilih_dokter_psikolog: 'Dr. Ahmad Wijaya, M.Psi',
-          spesialisasi: 'Psikolog Klinis',
-          deskripsi: 'Spesialis dalam menangani kecemasan dan depresi',
-          harga_konsultasi: 150000,
-          foto_url: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300',
-          alamat: 'Jl. Sudirman No. 123, Jakarta',
-          telepon: '021-1234567',
-          jadwal_tersedia: ['Senin', 'Rabu', 'Jumat']
-        },
-        {
-          id: 2,
-          pilih_dokter_psikolog: 'Dr. Sari Indah, S.Psi',
-          spesialisasi: 'Psikolog Anak',
-          deskripsi: 'Ahli dalam psikologi perkembangan anak dan remaja',
-          harga_konsultasi: 175000,
-          foto_url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300',
-          alamat: 'Jl. Thamrin No. 456, Jakarta',
-          telepon: '021-7654321',
-          jadwal_tersedia: ['Selasa', 'Kamis', 'Sabtu']
-        }
-      ]);
+      // Set empty array instead of mock data to avoid confusion
+      setDokters([]);
     } finally {
       setLoading(false);
+      console.log('🏁 fetchDokters completed');
     }
   };
 
@@ -144,15 +152,31 @@ const DokterManagement = () => {
 
   const handleEdit = (dokter) => {
     setEditingDokter(dokter);
+
+    // Safe parsing untuk jadwal_tersedia
+    let jadwalTersedia = [];
+    try {
+      if (dokter.jadwal_tersedia) {
+        if (typeof dokter.jadwal_tersedia === 'string') {
+          jadwalTersedia = JSON.parse(dokter.jadwal_tersedia);
+        } else if (Array.isArray(dokter.jadwal_tersedia)) {
+          jadwalTersedia = dokter.jadwal_tersedia;
+        }
+      }
+    } catch (error) {
+      console.warn('Error parsing jadwal_tersedia:', error);
+      jadwalTersedia = [];
+    }
+
     setFormData({
       pilih_dokter_psikolog: dokter.pilih_dokter_psikolog || '',
       spesialisasi: dokter.spesialisasi || '',
-      deskripsi: dokter.pengalaman || dokter.deskripsi || '', // Map pengalaman ke deskripsi
-      harga_konsultasi: dokter.tarif_per_jam || dokter.harga_konsultasi || '', // Map tarif_per_jam ke harga_konsultasi
+      deskripsi: dokter.pengalaman || dokter.deskripsi || '',
+      harga_konsultasi: dokter.tarif_per_jam || dokter.harga_konsultasi || '',
       foto_url: dokter.foto || dokter.foto_url || '',
       alamat: dokter.alamat || '',
       telepon: dokter.telepon || '',
-      jadwal_tersedia: dokter.jadwal_tersedia || []
+      jadwal_tersedia: jadwalTersedia
     });
     setShowForm(true);
   };
@@ -240,6 +264,26 @@ const DokterManagement = () => {
     );
   }
 
+  // Error boundary untuk menangkap error rendering
+  if (error && error.includes('not a function')) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="text-lg font-medium text-red-800">Component Error</h3>
+          <p className="text-sm text-red-600 mt-2">
+            There was an error loading the component. Please refresh the page.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -255,6 +299,43 @@ const DokterManagement = () => {
           Tambah Dokter Baru
         </button>
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-2 text-gray-600">Memuat data dokter...</p>
+          <p className="text-xs text-gray-500 mt-1">Connecting to backend server...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h4 className="font-medium text-red-800">Error Loading Dokters</h4>
+          <p className="text-sm text-red-600 mt-1">{error}</p>
+          <div className="mt-3 space-y-2">
+            <button
+              onClick={fetchDokters}
+              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 mr-2"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => {
+                console.log('🔧 Manual debug info:');
+                console.log('- Token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+                console.log('- User:', JSON.parse(localStorage.getItem('user') || '{}'));
+                console.log('- Current URL:', window.location.href);
+                alert('Debug info logged to console. Press F12 to view.');
+              }}
+              className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+            >
+              Debug Info
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Form Modal */}
       {showForm && (
@@ -411,65 +492,92 @@ const DokterManagement = () => {
       )}
 
       {/* Daftar Dokter */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.isArray(dokters) && dokters.map((dokter) => (
-          <div key={dokter.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-start space-x-3">
-              <img
-                src={dokter.foto || dokter.foto_url || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300'}
-                alt={dokter.pilih_dokter_psikolog}
-                className="w-16 h-16 rounded-full object-cover"
-              />
-              <div className="flex-1">
-                <h4 className="font-medium text-gray-900">{dokter.pilih_dokter_psikolog}</h4>
-                <p className="text-sm text-blue-600">{dokter.spesialisasi}</p>
-                <p className="text-sm text-gray-600 mt-1">{dokter.pengalaman || dokter.deskripsi}</p>
-                <p className="text-sm font-medium text-green-600 mt-2">
-                  Rp {(dokter.tarif_per_jam || dokter.harga_konsultasi)?.toLocaleString('id-ID')}/jam
-                </p>
-                {dokter.jadwal_tersedia && dokter.jadwal_tersedia.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-xs text-gray-500">Jadwal:</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {dokter.jadwal_tersedia.map((hari) => (
-                        <span key={hari} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                          {hari}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                onClick={() => handleEdit(dokter)}
-                className="text-blue-600 hover:text-blue-800 text-sm"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(dokter.id)}
-                className="text-red-600 hover:text-red-800 text-sm"
-              >
-                Hapus
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {!loading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.isArray(dokters) && dokters.length > 0 ? dokters.map((dokter) => {
+            // Safe render dengan null checks
+            if (!dokter || !dokter.id) return null;
 
-      {Array.isArray(dokters) && dokters.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Belum ada dokter/psikolog yang terdaftar</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="mt-2 text-blue-600 hover:text-blue-800"
-          >
-            Tambah dokter pertama
-          </button>
+            return (
+              <div key={dokter.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <img
+                    src={dokter.foto || dokter.foto_url || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300'}
+                    alt={dokter.pilih_dokter_psikolog || 'Dokter'}
+                    className="w-16 h-16 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300';
+                    }}
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{dokter.pilih_dokter_psikolog || 'Nama tidak tersedia'}</h4>
+                    <p className="text-sm text-blue-600">{dokter.spesialisasi || 'Spesialisasi tidak tersedia'}</p>
+                    <p className="text-sm text-gray-600 mt-1">{dokter.pengalaman || dokter.deskripsi || 'Deskripsi tidak tersedia'}</p>
+                    <p className="text-sm font-medium text-green-600 mt-2">
+                      Rp {((dokter.tarif_per_jam || dokter.harga_konsultasi || 0)).toLocaleString('id-ID')}/jam
+                    </p>
+                    {(() => {
+                      // Safe parsing dan rendering jadwal
+                      let jadwalArray = [];
+                      try {
+                        if (dokter.jadwal_tersedia) {
+                          if (typeof dokter.jadwal_tersedia === 'string') {
+                            jadwalArray = JSON.parse(dokter.jadwal_tersedia);
+                          } else if (Array.isArray(dokter.jadwal_tersedia)) {
+                            jadwalArray = dokter.jadwal_tersedia;
+                          }
+                        }
+                      } catch (error) {
+                        console.warn('Error parsing jadwal for display:', error);
+                        jadwalArray = [];
+                      }
+
+                      return jadwalArray && jadwalArray.length > 0 ? (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-500">Jadwal:</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {jadwalArray.map((hari, index) => (
+                              <span key={`${dokter.id}-${hari}-${index}`} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                {hari}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2 mt-4">
+                  <button
+                    onClick={() => handleEdit(dokter)}
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(dokter.id)}
+                    className="text-red-600 hover:text-red-800 text-sm"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="col-span-full text-center py-8">
+              <p className="text-gray-500">Belum ada dokter/psikolog yang terdaftar</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="mt-2 text-blue-600 hover:text-blue-800"
+              >
+                Tambah dokter pertama
+              </button>
+            </div>
+          )}
         </div>
       )}
+
+
     </div>
   );
 };

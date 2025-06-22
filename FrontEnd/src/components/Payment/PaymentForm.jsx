@@ -23,9 +23,11 @@ const PaymentForm = () => {
         const formData = new FormData();
         formData.append('payment_proof', paymentProof);
         formData.append('bookingId', bookingId);
+        formData.append('payment_method', 'transfer_bank'); // Default payment method
 
         try {
-            const response = await axios.post('http://localhost:5000/payments/proof', formData, {
+            // Try new centralized payment system first
+            const response = await axios.post('http://localhost:5000/payments/proof-new', formData, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'Content-Type': 'multipart/form-data'
@@ -38,7 +40,27 @@ const PaymentForm = () => {
             }
         } catch (error) {
             console.error('Error uploading payment proof:', error);
-            alert(error.response?.data?.msg || 'Terjadi kesalahan saat mengunggah bukti pembayaran');
+
+            // Fallback to old system if new system fails
+            try {
+                const fallbackResponse = await axios.post('http://localhost:5000/payments/proof', {
+                    payment_id: bookingId, // This might need adjustment based on actual payment ID
+                    payment_proof: paymentProof.name
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (fallbackResponse.data) {
+                    alert('Bukti pembayaran berhasil diunggah (fallback)');
+                    navigate('/bookings');
+                }
+            } catch (fallbackError) {
+                console.error('Fallback also failed:', fallbackError);
+                alert(error.response?.data?.msg || 'Terjadi kesalahan saat mengunggah bukti pembayaran');
+            }
         } finally {
             setLoading(false);
         }

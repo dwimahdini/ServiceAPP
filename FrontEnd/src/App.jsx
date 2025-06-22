@@ -14,16 +14,17 @@ import PsikologiPage from './pages/user/PsikologiPage';
 import DetailDokterPage from './pages/user/DetailDokterPage';
 import OpoWaePage from './pages/user/OpoWaePage';
 import TransaksiPage from './pages/user/TransaksiPage';
+import TransactionPage from './pages/user/TransactionPage';
+import Payment from './pages/Payment';
 import TransactionDashboard from './pages/admin/TransactionDashboard';
 import AllTransactions from './pages/admin/AllTransactions';
 import TransactionDetail from './pages/admin/TransactionDetail';
 import CreateTransaction from './pages/admin/CreateTransaction';
 import RevenueAnalytics from './pages/admin/RevenueAnalytics';
 import ServiceManagement from './pages/admin/ServiceManagement';
-import DatabaseManagementPage from './pages/admin/DatabaseManagementPage';
+import PaymentConfirmation from './pages/admin/PaymentConfirmation';
 
 import UserDashboardPage from './pages/user/UserDashboardPage';
-import AdminLoginTest from './components/Debug/AdminLoginTest';
 import Contact from './pages/Contact';
 
 function App() {
@@ -36,8 +37,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Debug Routes - Remove in production */}
-            <Route path="/admin-test" element={<AdminLoginTest />} />
+
 
             {/* Protected Routes - User */}
             <Route
@@ -139,6 +139,26 @@ function App() {
               }
             />
 
+            {/* Transaction History Page */}
+            <Route
+              path="/user/transactions"
+              element={
+                <ProtectedRoute>
+                  <TransactionPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Payment Page */}
+            <Route
+              path="/payment/:bookingId"
+              element={
+                <ProtectedRoute>
+                  <Payment />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Admin Service Management */}
             <Route
               path="/admin/services"
@@ -149,11 +169,14 @@ function App() {
               }
             />
 
+
+
+            {/* Admin Payment Confirmation */}
             <Route
-              path="/admin/database"
+              path="/admin/payments"
               element={
                 <ProtectedRoute requiredRole="admin">
-                  <DatabaseManagementPage />
+                  <PaymentConfirmation />
                 </ProtectedRoute>
               }
             />

@@ -161,70 +161,30 @@ const EnhancedDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Service Statistics */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Kinerja Layanan</h3>
-          <div className="space-y-4">
-            {dashboardData.serviceStats.map((service) => (
-              <div key={service.id} className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-gray-900">{service.name}</span>
-                    <span className="text-sm text-gray-600">{service.bookings} pesanan</span>
-                  </div>
-                  <div className="bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{
-                        width: `${Math.min((service.bookings / Math.max(...dashboardData.serviceStats.map(s => s.bookings), 1)) * 100, 100)}%`
-                      }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-xs text-gray-500">{service.providers} penyedia</span>
-                    <span className="text-xs font-medium text-gray-700">{formatCurrency(service.revenue)}</span>
-                  </div>
-                </div>
+      {/* Service Statistics - Full Width */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Kinerja Layanan</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {dashboardData.serviceStats.map((service) => (
+            <div key={service.id} className="bg-gray-50 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-900">{service.name}</span>
+                <span className="text-sm text-gray-600">{service.bookings} pesanan</span>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Bookings */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Pesanan Terbaru</h3>
-          <div className="space-y-3">
-            {dashboardData.recentBookings.length > 0 ? (
-              dashboardData.recentBookings.map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Pesanan #{booking.id}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {formatDate(booking.tanggal_booking)} - {booking.jam_booking}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">
-                      {formatCurrency(booking.total_harga)}
-                    </p>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                      booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {booking.status === 'confirmed' ? 'Dikonfirmasi' :
-                       booking.status === 'pending' ? 'Menunggu' : booking.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">Belum ada pesanan terbaru</p>
-            )}
-          </div>
+              <div className="bg-gray-200 rounded-full h-2 mb-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{
+                    width: `${Math.min((service.bookings / Math.max(...dashboardData.serviceStats.map(s => s.bookings), 1)) * 100, 100)}%`
+                  }}
+                ></div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">{service.providers} penyedia</span>
+                <span className="text-xs font-medium text-gray-700">{formatCurrency(service.revenue)}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -239,10 +199,10 @@ const EnhancedDashboard = () => {
             Kelola Layanan
           </button>
           <button
-            onClick={() => window.location.href = '/admin/transactions/dashboard'}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            onClick={() => window.location.href = '/admin/payments'}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
           >
-            Lihat Transaksi
+            Konfirmasi Pembayaran
           </button>
         </div>
       </div>

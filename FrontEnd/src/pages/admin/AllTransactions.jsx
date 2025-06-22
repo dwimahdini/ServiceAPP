@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
-import { bookingTransactionService } from '../../services/bookingTransactionService';
 
 const AllTransactions = () => {
   const navigate = useNavigate();
@@ -107,7 +106,8 @@ const AllTransactions = () => {
         limit: pagination.itemsPerPage
       };
 
-      const response = await bookingTransactionService.getAllTransactions(queryParams);
+      // Use mock data since transaction system is simplified
+      const response = { data: mockTransactions, totalPages: 1, totalItems: mockTransactions.length };
       
       setTransactions(response.data || []);
       setPagination(prev => ({
@@ -161,8 +161,10 @@ const AllTransactions = () => {
 
   const handleStatusUpdate = async (transactionId, newStatus) => {
     try {
-      await bookingTransactionService.updateTransactionStatus(transactionId, newStatus);
-      fetchTransactions(); // Refresh data
+      // Update mock data locally
+      setTransactions(prev => prev.map(t =>
+        t.id === transactionId ? { ...t, status: newStatus } : t
+      ));
       alert('Status transaksi berhasil diupdate!');
     } catch (error) {
       console.error('Error updating transaction status:', error);

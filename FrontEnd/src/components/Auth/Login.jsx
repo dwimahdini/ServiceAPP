@@ -103,16 +103,15 @@ const Login = () => {
           </form>
         </div>
       </div>
-      {/* Right: Illustration */}
-      <div className="hidden md:flex w-1/2 items-center justify-center relative" style={{ background: '#0d5c7d' }}>
-        <div className="flex flex-col items-center justify-center w-full h-full p-8">
-          <h2 className="text-white text-2xl font-bold tracking-wide mb-4">DELIVERY SERVICE</h2>
-          <img
-            src="https://images.unsplash.com/photo-1515168833906-d2a3b82b302b?auto=format&fit=crop&w=600&q=80"
-            alt="Delivery Service Illustration"
-            className="w-[350px] max-w-full drop-shadow-xl"
-            style={{ objectFit: 'contain' }}
-          />
+      {/* Right: Background */}
+      <div className="hidden md:flex w-1/2 relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black opacity-20"></div>
+        <div className="flex items-center justify-center w-full h-full p-8">
+          <div className="text-center text-white">
+            <div className="text-6xl mb-6">🔧</div>
+            <h2 className="text-3xl font-bold mb-4">Future X</h2>
+            <p className="text-lg opacity-90">Platform Layanan Terpadu</p>
+          </div>
         </div>
       </div>
     </div>

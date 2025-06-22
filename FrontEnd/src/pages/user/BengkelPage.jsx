@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
+import BackButton from '../../components/UI/BackButton';
 import { bengkelService } from '../../services/bengkelService';
 
 const BengkelPage = () => {
@@ -69,6 +70,15 @@ const BengkelPage = () => {
           ></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
             <div className="max-w-2xl">
+              {/* Back Button */}
+              <div className="mb-6">
+                <BackButton
+                  to="/user/dashboard"
+                  label="Kembali ke Dashboard"
+                  variant="white"
+                />
+              </div>
+
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 Layanan Bengkel
               </h1>

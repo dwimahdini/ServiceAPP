@@ -1,27 +1,23 @@
-﻿# 🚀 FUTURE X - Sistem Marketplace Layanan
+# FUTURE X - Platform Layanan Terpadu
 
-**Future X** adalah sistem marketplace layanan yang menghubungkan pengguna dengan penyedia layanan dalam 3 kategori utama:
+Platform web yang menyediakan 3 layanan utama:
 
-- **🧠 Psikologi**: Konsultasi dengan dokter psikologi berpengalaman
-- **🔧 Bengkel**: Layanan perbaikan kendaraan bermotor dan mobil
-- **🏠 Opo Wae**: Layanan kebutuhan sehari-hari (driver, cleaning, babysitter, dll)
+1. **Bengkel** - Pencari bengkel berbasis lokasi
+2. **Psikologi** - Konsultasi psikologi online
+3. **Opo Wae** - Layanan kebutuhan sehari-hari
 
-## 🎯 Status: ✅ PRODUCTION READY
+## Struktur Proyek
 
-Semua fitur admin dan endpoint API telah diuji dan berfungsi dengan sempurna.
-
-## 🚀 Quick Start
-
-### 1. Setup Database
-
-```bash
-mysql -u root -p
-CREATE DATABASE pintukeluar;
-USE pintukeluar;
-SOURCE database-complete.sql;
+```
+Future X website/
+├── FrontEnd/          # React.js + Tailwind CSS
+├── PintuKeluarAPI/    # Node.js + Express + MySQL
+└── README.md
 ```
 
-### 2. Jalankan Backend
+## Cara Menjalankan
+
+### Backend
 
 ```bash
 cd PintuKeluarAPI
@@ -29,9 +25,9 @@ npm install
 npm start
 ```
 
-Server: http://localhost:3001
+Server berjalan di: http://localhost:3001
 
-### 3. Jalankan Frontend
+### Frontend
 
 ```bash
 cd FrontEnd
@@ -39,39 +35,43 @@ npm install
 npm run dev
 ```
 
-Frontend: http://localhost:5173
+Aplikasi berjalan di: http://localhost:5173
 
-### 4. Login Admin
+### Database
 
-- Email: `admin@futurex.com`
-- Password: `admin123`
+1. Buat database MySQL bernama `pintukeluar`
+2. Import struktur database dari migration files
+3. Konfigurasi koneksi di `PintuKeluarAPI/config/database.js`
 
-## 📚 Dokumentasi Lengkap
+## Fitur Utama
 
-Untuk dokumentasi lengkap sistem, lihat: **[DOKUMENTASI-LENGKAP.md](DOKUMENTASI-LENGKAP.md)**
+### User
 
-## 🛠️ Tech Stack
+- Registrasi & Login
+- Dashboard user
+- Booking layanan psikologi
+- Sistem pembayaran sederhana
+- Riwayat booking
 
-- **Backend**: Node.js + Express.js + Sequelize
-- **Frontend**: React.js + Vite + Tailwind CSS
+### Admin
+
+- Dashboard admin dengan statistik
+- Manajemen dokter psikologi
+- Manajemen bengkel & produk
+- Konfirmasi pembayaran
+- Manajemen layanan Opo Wae
+
+## Teknologi
+
+- **Frontend**: React.js, Tailwind CSS, Vite
+- **Backend**: Node.js, Express.js, Sequelize ORM
 - **Database**: MySQL
 - **Authentication**: JWT
+- **File Upload**: Multer
 
-## ✅ Fitur Lengkap
+## Status
 
-### Admin Interface:
-
-- 🧠 **Kelola Psikologi**: CRUD dokter/psikolog
-- 🔧 **Kelola Bengkel**: CRUD bengkel dan produk
-- 🏠 **Kelola Opo Wae**: CRUD jenis layanan
-
-### API Endpoints:
-
-- Authentication & Authorization
-- CRUD operations untuk semua layanan
-- Database management
-- Transaction handling
-
-## 📞 Support
-
-Sistem telah diuji dan siap untuk production. Semua endpoint API berfungsi dengan baik dan interface admin telah terintegrasi dengan database.
+✅ Sistem berjalan dengan baik
+✅ Semua fitur utama berfungsi
+✅ Database dan API terintegrasi
+✅ Kode sudah dibersihkan dari debug/test files

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
-import { bookingTransactionService } from '../../services/bookingTransactionService';
 
 const TransactionDetail = () => {
   const { id } = useParams();
@@ -83,8 +82,8 @@ const TransactionDetail = () => {
       setLoading(true);
       setError(null);
 
-      const response = await bookingTransactionService.getTransactionById(id);
-      setTransaction(response);
+      // Use mock data since transaction system is simplified
+      setTransaction(mockTransaction);
 
     } catch (error) {
       console.error('Error fetching transaction detail:', error);
@@ -101,7 +100,8 @@ const TransactionDetail = () => {
     try {
       setUpdating(true);
       
-      await bookingTransactionService.updateTransactionStatus(id, newStatus);
+      // Mock update since transaction system is simplified
+      console.log('Updating transaction status:', id, newStatus);
       
       // Update local state
       setTransaction(prev => ({

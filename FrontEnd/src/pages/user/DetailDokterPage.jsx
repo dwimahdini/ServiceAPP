@@ -18,7 +18,31 @@ const DetailDokterPage = () => {
         setLoading(true);
         setError(null);
 
+        // Validasi ID parameter
+        if (!id || isNaN(parseInt(id))) {
+          throw new Error('ID dokter tidak valid');
+        }
+
         const dokterData = await psikologiService.getDokterById(id);
+
+        if (!dokterData) {
+          throw new Error('Dokter tidak ditemukan');
+        }
+
+        // Safe parsing untuk jadwal_tersedia
+        let jadwalPraktik = [];
+        try {
+          if (dokterData.jadwal_tersedia) {
+            if (typeof dokterData.jadwal_tersedia === 'string') {
+              jadwalPraktik = JSON.parse(dokterData.jadwal_tersedia);
+            } else if (Array.isArray(dokterData.jadwal_tersedia)) {
+              jadwalPraktik = dokterData.jadwal_tersedia;
+            }
+          }
+        } catch (parseError) {
+          console.warn('Error parsing jadwal_tersedia:', parseError);
+          jadwalPraktik = [];
+        }
 
         // Use data from database only - no default values
         const enhancedDokter = {
@@ -26,18 +50,18 @@ const DetailDokterPage = () => {
           nama_dokter: dokterData.pilih_dokter_psikolog || dokterData.nama_dokter,
           tempat_praktik: dokterData.alamat || null,
           alumni: null, // Will be shown only if available in database
-          biografi: dokterData.pengalaman || null,
+          biografi: dokterData.pengalaman || dokterData.deskripsi || null,
           keahlian: dokterData.spesialisasi ? [dokterData.spesialisasi] : [],
-          jadwal_praktik: [], // Will be shown only if available in database
-          tarif: dokterData.tarif_per_jam ? {
-            per_jam: `Rp ${parseFloat(dokterData.tarif_per_jam).toLocaleString('id-ID')}`
+          jadwal_praktik: jadwalPraktik,
+          tarif: (dokterData.tarif_per_jam || dokterData.harga_konsultasi) ? {
+            per_jam: `Rp ${parseFloat(dokterData.tarif_per_jam || dokterData.harga_konsultasi || 0).toLocaleString('id-ID')}`
           } : null
         };
 
         setDokter(enhancedDokter);
       } catch (error) {
         console.error('Error fetching dokter detail:', error);
-        setError('Gagal memuat detail dokter. Silakan coba lagi.');
+        setError(error.message || 'Gagal memuat detail dokter. Silakan coba lagi.');
 
         // No fallback data - show error state instead
         setDokter(null);
@@ -46,7 +70,12 @@ const DetailDokterPage = () => {
       }
     };
 
-    fetchDokterDetail();
+    if (id) {
+      fetchDokterDetail();
+    } else {
+      setError('ID dokter tidak valid');
+      setLoading(false);
+    }
   }, [id]);
 
   const handleBookingClick = () => {

@@ -59,6 +59,7 @@ const Navbar = () => {
     : [
         { name: 'Home', onClick: handleHomeClick },
         { name: 'Layanan', onClick: handleLayananClick },
+        { name: 'Transaksi', href: '/user/transactions' },
         { name: 'Contact', onClick: handleContactClick },
       ];
 

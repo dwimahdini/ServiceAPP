@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import Navbar from '../Layout/Navbar';
-import { authAPI, layananAPI, bookingAPI, produkAPI } from '../../services/api';
-import { mockAuthAPI, mockLayananAPI, mockBookingAPI, mockProdukAPI } from '../../services/mockAuth';
 import EnhancedDashboard from '../Admin/EnhancedDashboard';
 
 const AdminDashboard = () => {

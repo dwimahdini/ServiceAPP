@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
-import { mockAuthAPI } from '../services/mockAuth';
-import { simpleMockAPI } from '../services/simpleMock';
 
 const AuthContext = createContext();
 

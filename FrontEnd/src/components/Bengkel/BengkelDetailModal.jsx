@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { authAPI } from '../../services/api';
 
 const BengkelDetailModal = ({ bengkel, onClose }) => {
   const [produkList, setProdukList] = useState([]);
@@ -22,8 +21,21 @@ const BengkelDetailModal = ({ bengkel, onClose }) => {
   const fetchProdukData = async () => {
     try {
       setLoading(true);
-      const response = await authAPI.get(`/bengkel/${bengkel.id}/produk`);
-      setProdukList(response.data || []);
+      console.log('Fetching produk for bengkel ID:', bengkel.id);
+
+      // Menggunakan fetch langsung karena ini public endpoint
+      const response = await fetch(`http://localhost:3001/bengkel/${bengkel.id}/produk`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Produk data received:', result);
+
+      // Backend mengembalikan { success: true, data: [...] }
+      const produkData = result.data || [];
+      setProdukList(produkData);
     } catch (error) {
       console.error('Error fetching produk data:', error);
       setProdukList([]);
@@ -215,11 +227,16 @@ const BengkelDetailModal = ({ bengkel, onClose }) => {
                   </svg>
                 </div>
                 <p className="text-gray-500">
-                  {selectedCategory === 'all' 
-                    ? 'Belum ada produk yang tersedia' 
+                  {selectedCategory === 'all'
+                    ? 'Bengkel ini belum menambahkan produk atau layanan'
                     : 'Tidak ada produk untuk kategori ini'
                   }
                 </p>
+                {selectedCategory === 'all' && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    Silakan hubungi bengkel langsung untuk informasi produk dan layanan yang tersedia
+                  </p>
+                )}
               </div>
             )}
           </div>

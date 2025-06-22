@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
-import { bookingTransactionService } from '../../services/bookingTransactionService';
 
 const TransactionDashboard = () => {
   const navigate = useNavigate();
@@ -90,20 +89,9 @@ const TransactionDashboard = () => {
       setLoading(true);
       setError(null);
 
-      // Try to fetch from API
-      const [transactions, revenue] = await Promise.all([
-        bookingTransactionService.getAllTransactions({ limit: 5 }),
-        bookingTransactionService.getRevenueAnalytics('month')
-      ]);
-
-      setDashboardData({
-        totalRevenue: revenue.total || 0,
-        totalTransactions: transactions.total || 0,
-        pendingTransactions: transactions.pending || 0,
-        completedTransactions: transactions.completed || 0,
-        recentTransactions: transactions.data || [],
-        revenueAnalytics: revenue.analytics || null
-      });
+      // For now, use mock data since new transaction system is being implemented
+      console.log('Using mock data for transaction dashboard');
+      setDashboardData(mockDashboardData);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

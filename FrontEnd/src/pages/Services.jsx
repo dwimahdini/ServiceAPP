@@ -1,6 +1,6 @@
 import React from 'react';
 import MainLayout from '../components/Layout/MainLayout';
-import ServiceList from '../components/Services/ServiceList';
+import ServiceCard from '../components/UI/ServiceCard';
 
 const Services = () => {
   return (
@@ -19,7 +19,28 @@ const Services = () => {
         </section>
 
         {/* Services Content */}
-        <ServiceList />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <ServiceCard
+              title="Bengkel"
+              description="Temukan bengkel terpercaya di sekitar Anda"
+              icon="🔧"
+              link="/bengkel"
+            />
+            <ServiceCard
+              title="Psikologi"
+              description="Konsultasi dengan psikolog profesional"
+              icon="🧠"
+              link="/psikologi"
+            />
+            <ServiceCard
+              title="Opo Wae"
+              description="Layanan kebutuhan sehari-hari"
+              icon="🛍️"
+              link="/opo-wae"
+            />
+          </div>
+        </div>
       </div>
     </MainLayout>
   );

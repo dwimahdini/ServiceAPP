@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/Layout/MainLayout';
+import BackButton from '../../components/UI/BackButton';
 import { useAuth } from '../../contexts/AuthContext';
 
 const TransaksiPage = () => {
@@ -129,13 +130,22 @@ const TransaksiPage = () => {
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <section className="bg-gray-900 text-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Riwayat Transaksi
-            </h1>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed">
-              Kelola dan pantau semua transaksi layanan Anda
-            </p>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <BackButton
+                to="/user/dashboard"
+                label="Kembali ke Dashboard"
+                variant="white"
+              />
+            </div>
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Riwayat Transaksi
+              </h1>
+              <p className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed">
+                Kelola dan pantau semua transaksi layanan Anda
+              </p>
+            </div>
           </div>
         </section>
 

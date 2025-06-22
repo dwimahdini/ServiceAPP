@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../../components/Layout/MainLayout';
 import BengkelDetailModal from '../../components/Bengkel/BengkelDetailModal';
+import BackButton from '../../components/UI/BackButton';
 import { bengkelService } from '../../services/bengkelService';
 
 const LayananMotorPage = () => {
@@ -100,6 +101,15 @@ const LayananMotorPage = () => {
           ></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
             <div className="max-w-2xl">
+              {/* Back Button */}
+              <div className="mb-6">
+                <BackButton
+                  to="/user/dashboard"
+                  label="Kembali ke Dashboard"
+                  variant="white"
+                />
+              </div>
+
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 Layanan Motor
               </h1>
@@ -205,9 +215,6 @@ const LayananMotorPage = () => {
                           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           Lihat Detail
-                        </button>
-                        <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                          Hubungi
                         </button>
                       </div>
                     </div>

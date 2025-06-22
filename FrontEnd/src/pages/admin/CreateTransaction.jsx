@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
-import { bookingTransactionService } from '../../services/bookingTransactionService';
 import { authAPI } from '../../services/api';
 
 const CreateTransaction = () => {
@@ -116,11 +115,10 @@ const CreateTransaction = () => {
       };
 
       console.log('Creating transaction:', transactionData);
-      
-      const result = await bookingTransactionService.createTransaction(transactionData);
-      
-      alert('Transaksi berhasil dibuat!');
-      navigate(`/admin/transactions/${result.id}`);
+
+      // For now, just show success message since transaction system is simplified
+      alert('Fitur ini sedang dalam pengembangan. Gunakan sistem booking yang ada.');
+      navigate('/admin/dashboard');
       
     } catch (error) {
       console.error('Error creating transaction:', error);

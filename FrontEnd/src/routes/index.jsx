@@ -5,8 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 // Components
 import Login from '../components/Auth/Login';
 import Register from '../components/Auth/Register';
-import BookingForm from '../components/Booking/BookingForm';
-import BookingList from '../components/Booking/BookingList';
+
 import PaymentForm from '../components/Payment/PaymentForm';
 import Home from '../components/Home';
 import Profile from '../components/Profile';

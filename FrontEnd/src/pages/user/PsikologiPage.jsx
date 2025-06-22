@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
+import BackButton from '../../components/UI/BackButton';
 import { psikologiService } from '../../services/psikologiService';
 import { bookingService } from '../../services/bookingService';
 
@@ -15,7 +16,6 @@ const PsikologiPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [bookingDetails, setBookingDetails] = useState(null);
   const [bookingForm, setBookingForm] = useState({
-    nama_lengkap: '',
     pilih_hari: '',
     pilih_jam: '',
     durasi_konsultasi: '',
@@ -71,7 +71,20 @@ const PsikologiPage = () => {
       dokter.id.toString() === bookingForm.pilih_dokter_psikolog
     );
 
-    return selectedDokter?.jadwal_tersedia || [];
+    if (!selectedDokter || !selectedDokter.jadwal_tersedia) return [];
+
+    // Safe parsing jadwal_tersedia
+    try {
+      if (typeof selectedDokter.jadwal_tersedia === 'string') {
+        return JSON.parse(selectedDokter.jadwal_tersedia);
+      } else if (Array.isArray(selectedDokter.jadwal_tersedia)) {
+        return selectedDokter.jadwal_tersedia;
+      }
+    } catch (error) {
+      console.warn('Error parsing jadwal_tersedia in getAvailableDays:', error);
+    }
+
+    return [];
   };
 
   // Get doctors with combined name and specialization
@@ -137,19 +150,48 @@ const PsikologiPage = () => {
       setSubmitting(true);
       setError(null);
 
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+      // Get selected doctor data for tarif
+      const selectedDokter = dokterList.find(dokter =>
+        dokter.id.toString() === bookingForm.pilih_dokter_psikolog
+      );
+
+      if (!selectedDokter) {
+        throw new Error('Dokter tidak ditemukan');
+      }
+
+      // Add tarif to form data
+      const formDataWithTarif = {
+        ...bookingForm,
+        tarif_per_jam: selectedDokter.tarif_per_jam || selectedDokter.harga_konsultasi || 0
+      };
+
       // Format booking data menggunakan booking service
-      const bookingData = bookingService.formatPsikologiBooking(bookingForm);
+      const bookingData = bookingService.formatPsikologiBooking(formDataWithTarif);
 
       console.log('Sending booking data:', bookingData);
 
-      const result = await bookingService.createValidatedBooking(bookingData);
+      const bookingResult = await bookingService.createValidatedBooking(bookingData);
 
-      console.log('Booking result:', result);
-      alert('Booking berhasil! Kami akan menghubungi Anda segera.');
+      console.log('Booking result:', bookingResult);
+
+      // Sistem sederhana - booking sudah include transaksi
+      if (bookingResult.success && bookingResult.data) {
+        const { bookingId, totalAmount, customerName, serviceDetails } = bookingResult.data;
+
+        alert(`Booking berhasil dibuat! 🎉\n\n` +
+              `ID Booking: ${bookingId}\n` +
+              `Nama: ${customerName}\n` +
+              `Layanan: ${serviceDetails}\n` +
+              `Total Pembayaran: Rp ${totalAmount.toLocaleString('id-ID')}\n\n` +
+              `Silakan lakukan pembayaran dan upload bukti transfer.`);
+      } else {
+        alert('Booking berhasil! Kami akan menghubungi Anda segera.');
+      }
 
       // Reset form and close modal
       setBookingForm({
-        nama_lengkap: '',
         pilih_hari: '',
         pilih_jam: '',
         durasi_konsultasi: '',
@@ -175,19 +217,31 @@ const PsikologiPage = () => {
     <MainLayout>
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <div className="relative bg-white">
+        <div className="relative bg-gray-900">
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url('https://images.pexels.com/photos/5699456/pexels-photo-5699456.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')`
             }}
           ></div>
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
             <div className="max-w-2xl">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+              {/* Back Button */}
+              <div className="mb-6">
+                <BackButton
+                  to="/user/dashboard"
+                  label="Kembali ke Dashboard"
+                  variant="white"
+                />
+              </div>
+
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
                 Konsultasi Psikologi
               </h1>
-              <p className="text-xl mb-8 text-gray-700 leading-relaxed">
+              <p className="text-xl mb-8 text-gray-200 leading-relaxed">
                 Kami menyediakan layanan konsultasi psikologi profesional dengan psikolog berpengalaman.
                 Dapatkan bantuan untuk kesehatan mental dan kesejahteraan hidup Anda dengan layanan terpercaya
                 yang telah membantu ribuan klien mencapai kehidupan yang lebih baik.
@@ -214,19 +268,7 @@ const PsikologiPage = () => {
             </p>
 
             <form onSubmit={handleBookingSubmit} className="max-w-4xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <input
-                    type="text"
-                    name="nama_lengkap"
-                    value={bookingForm.nama_lengkap}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Nama Anda"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-
+              <div className="grid grid-cols-1 gap-6 mb-6">
                 <div>
                   <select
                     name="pilih_dokter_psikolog"
@@ -330,53 +372,77 @@ const PsikologiPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {dokterList.map((dokter) => (
-                  <div key={dokter.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                    <div className="aspect-square bg-gray-200 flex items-center justify-center">
-                      {dokter.foto ? (
-                        <img
-                          src={dokter.foto}
-                          alt={dokter.pilih_dokter_psikolog}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
+                {dokterList.map((dokter) => {
+                  // Safe render dengan null checks
+                  if (!dokter || !dokter.id) return null;
+
+                  return (
+                    <div key={dokter.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                      <div className="aspect-square bg-gray-200 flex items-center justify-center">
+                        {(dokter.foto || dokter.foto_url) ? (
+                          <img
+                            src={dokter.foto || dokter.foto_url}
+                            alt={dokter.pilih_dokter_psikolog || 'Dokter'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center" style={{display: (dokter.foto || dokter.foto_url) ? 'none' : 'flex'}}>
                           <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        {dokter.pilih_dokter_psikolog || dokter.nama_dokter}
-                      </h3>
-                      <p className="text-blue-600 font-medium mb-2">{dokter.spesialisasi}</p>
-                      <p className="text-gray-600 text-sm mb-3">
-                        Pengalaman: {dokter.pengalaman || 'Berpengalaman'}
-                      </p>
+                      <div className="p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {dokter.pilih_dokter_psikolog || dokter.nama_dokter || 'Nama tidak tersedia'}
+                        </h3>
+                        <p className="text-blue-600 font-medium mb-2">{dokter.spesialisasi || 'Spesialisasi tidak tersedia'}</p>
+                        <p className="text-gray-600 text-sm mb-3">
+                          Pengalaman: {dokter.pengalaman || dokter.deskripsi || 'Berpengalaman'}
+                        </p>
 
-                      {dokter.tarif_per_jam && (
-                        <div className="mb-3">
-                          <p className="text-green-600 font-semibold">
-                            Rp {parseFloat(dokter.tarif_per_jam).toLocaleString('id-ID')}/jam
-                          </p>
-                        </div>
-                      )}
-
-                      {dokter.jadwal_tersedia && dokter.jadwal_tersedia.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-1">Jadwal Tersedia:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {dokter.jadwal_tersedia.map((hari) => (
-                              <span key={hari} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                                {hari}
-                              </span>
-                            ))}
+                        {(dokter.tarif_per_jam || dokter.harga_konsultasi) && (
+                          <div className="mb-3">
+                            <p className="text-green-600 font-semibold">
+                              Rp {parseFloat(dokter.tarif_per_jam || dokter.harga_konsultasi || 0).toLocaleString('id-ID')}/jam
+                            </p>
                           </div>
-                        </div>
-                      )}
+                        )}
+
+                        {(() => {
+                          // Safe parsing dan rendering jadwal
+                          let jadwalArray = [];
+                          try {
+                            if (dokter.jadwal_tersedia) {
+                              if (typeof dokter.jadwal_tersedia === 'string') {
+                                jadwalArray = JSON.parse(dokter.jadwal_tersedia);
+                              } else if (Array.isArray(dokter.jadwal_tersedia)) {
+                                jadwalArray = dokter.jadwal_tersedia;
+                              }
+                            }
+                          } catch (error) {
+                            console.warn('Error parsing jadwal for user display:', error);
+                            jadwalArray = [];
+                          }
+
+                          return jadwalArray && jadwalArray.length > 0 ? (
+                            <div className="mb-3">
+                              <p className="text-xs text-gray-500 mb-1">Jadwal Tersedia:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {jadwalArray.map((hari, index) => (
+                                  <span key={`${dokter.id}-jadwal-${index}`} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                    {hari}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null;
+                        })()}
 
                       <div className="flex items-center gap-2 mb-4">
                         <div className="flex items-center">
@@ -402,7 +468,8 @@ const PsikologiPage = () => {
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -429,7 +496,7 @@ const PsikologiPage = () => {
                   {/* Detail Pasien */}
                   <div className="border-b pb-3">
                     <h4 className="font-semibold text-gray-700 mb-2">Detail Pasien</h4>
-                    <p className="text-gray-600">Nama: {bookingForm.nama_lengkap}</p>
+                    <p className="text-gray-600">Nama: {JSON.parse(localStorage.getItem('user') || '{}').name || 'User'}</p>
                   </div>
 
                   {/* Detail Dokter */}

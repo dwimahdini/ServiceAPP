@@ -55,11 +55,23 @@ export const psikologiService = {
   // Get dokter by ID (filter dari semua dokter)
   async getDokterById(id) {
     try {
+      // Validasi ID
+      if (!id || isNaN(parseInt(id))) {
+        throw new Error('ID dokter tidak valid');
+      }
+
       const allDokter = await this.getDokterPsikolog();
+
+      if (!Array.isArray(allDokter) || allDokter.length === 0) {
+        throw new Error('Tidak ada data dokter tersedia');
+      }
+
       const dokter = allDokter.find(d => d.id === parseInt(id));
+
       if (!dokter) {
         throw new Error('Dokter tidak ditemukan');
       }
+
       return dokter;
     } catch (error) {
       console.error('Error fetching dokter by ID:', error);
@@ -75,11 +87,8 @@ export const psikologiService = {
         headers: createHeaders(false),
       });
       const allDurasi = await handleResponse(response);
-      console.log('All durasi from API:', allDurasi);
-      // Filter hanya durasi untuk psikologi (layananId = 1)
-      const psikologDurasi = allDurasi.filter(durasi => durasi.layananId === 1);
-      console.log('Filtered psikolog durasi:', psikologDurasi);
-      return psikologDurasi;
+      // Return static durasi options
+      return allDurasi;
     } catch (error) {
       console.error('Error fetching durasi:', error);
       return []; // Return empty array instead of throwing error
@@ -108,7 +117,7 @@ export const psikologiService = {
   // Create booking
   async createBooking(bookingData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/tambahbooking`, {
+      const response = await fetch(`${API_BASE_URL}/bookings`, {
         method: 'POST',
         headers: createHeaders(true), // Perlu auth untuk booking
         body: JSON.stringify(bookingData),
@@ -123,7 +132,7 @@ export const psikologiService = {
   // Get user bookings
   async getUserBookings() {
     try {
-      const response = await fetch(`${API_BASE_URL}/getbooking`, {
+      const response = await fetch(`${API_BASE_URL}/bookings`, {
         method: 'GET',
         headers: createHeaders(true), // Perlu auth untuk melihat booking sendiri
       });

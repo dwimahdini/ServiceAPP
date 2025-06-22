@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/Layout/MainLayout';
-import { bookingTransactionService } from '../../services/bookingTransactionService';
 
 const RevenueAnalytics = () => {
   const navigate = useNavigate();
@@ -59,24 +58,14 @@ const RevenueAnalytics = () => {
       setLoading(true);
       setError(null);
 
-      const [revenueData, transactionData] = await Promise.all([
-        bookingTransactionService.getRevenueAnalytics(period),
-        bookingTransactionService.getAllTransactions()
-      ]);
-
-      setAnalyticsData({
-        totalRevenue: revenueData.total || 0,
-        revenueGrowth: revenueData.growth || 0,
-        topServices: revenueData.topServices || [],
-        dailyRevenue: revenueData.daily || [],
-        monthlyRevenue: revenueData.monthly || [],
-        serviceBreakdown: revenueData.breakdown || []
-      });
+      // For now, use mock data since new transaction system is being implemented
+      console.log('Using mock data for revenue analytics');
+      setAnalyticsData(mockAnalyticsData);
 
     } catch (error) {
       console.error('Error fetching analytics data:', error);
       setError('Gagal memuat data analytics. Menggunakan data demo.');
-      
+
       // Fallback to mock data
       setAnalyticsData(mockAnalyticsData);
     } finally {
